@@ -25,10 +25,15 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private final String defaultLoginSuccessUrl;
+    private final String loginSuccessUrl;
+    private final String logoutSuccessUrl;
 
-    public SecurityConfig(@Value("${custom.default-login-success-url}") String defaultLoginSuccessUrl) {
-        this.defaultLoginSuccessUrl = defaultLoginSuccessUrl;
+    public SecurityConfig(
+            @Value("${custom.login-success-url}") String loginSuccessUrl,
+            @Value("${custom.logout-success-url}") String logoutSuccessUrl
+    ) {
+        this.loginSuccessUrl = loginSuccessUrl;
+        this.logoutSuccessUrl = logoutSuccessUrl;
     }
 
     @Bean
@@ -41,7 +46,7 @@ public class SecurityConfig {
 
         http.oauth2Login(login -> {
             // open root page (-> frontend home page) after login
-            login.defaultSuccessUrl(this.defaultLoginSuccessUrl, true);
+            login.defaultSuccessUrl(loginSuccessUrl, true);
             login.authorizationEndpoint(authEndpoint -> authEndpoint.baseUri("/api/v1/login"));
             login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userAuthoritiesMapper(oAuthGrantedAuthoritiesMapper()));
         });
@@ -57,6 +62,7 @@ public class SecurityConfig {
         http.logout(logout -> {
             logout.logoutUrl("/api/v1/logout");
             logout.addLogoutHandler(backChannelInformingLogoutHandler);
+            logout.logoutSuccessUrl(logoutSuccessUrl);
         });
 
         http.oidcLogout(logout -> {
