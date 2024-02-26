@@ -19,6 +19,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalField;
 import java.util.ArrayList;
@@ -86,9 +87,11 @@ public class EventExcelRepository implements EventRepository {
             if (instant.atZone(ZoneId.of("Europe/Berlin")).getYear() == year) {
                 return instant;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (DateTimeParseException e) {
             // expected
+        } catch (Exception e) {
+            // unexpected, but the fallback will probably get the right date
+            e.printStackTrace();
         }
         var dates = value.split("-");
         var date = dates.length > index ? dates[index] : dates[0];
