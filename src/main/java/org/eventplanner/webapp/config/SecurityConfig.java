@@ -2,6 +2,7 @@ package org.eventplanner.webapp.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,12 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 public class SecurityConfig {
 
-    public final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final String defaultLoginSuccessUrl;
+
+    public SecurityConfig(@Value("${custom.default-login-success-url}") String defaultLoginSuccessUrl) {
+        this.defaultLoginSuccessUrl = defaultLoginSuccessUrl;
+    }
 
     @Bean
     public SecurityFilterChain oidcClientCustomizer(
@@ -34,10 +40,14 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
 
         http.oauth2Login(login -> {
-            login.defaultSuccessUrl("/login-ok");
+            // open root page (-> frontend home page) after login
+            login.defaultSuccessUrl(this.defaultLoginSuccessUrl, true);
+            login.authorizationEndpoint(authEndpoint -> authEndpoint.baseUri("/api/v1/login"));
             login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userAuthoritiesMapper(oAuthGrantedAuthoritiesMapper()));
         });
 
+        // By default, Spring redirects an unauthorized user to the login page. In this case we want to return a 401
+        // error and let the frontend handle the redirect.
         http.exceptionHandling(exceptionHandling -> {
             exceptionHandling.defaultAuthenticationEntryPointFor(
                     new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
@@ -45,6 +55,7 @@ public class SecurityConfig {
         });
 
         http.logout(logout -> {
+            logout.logoutUrl("/api/v1/logout");
             logout.addLogoutHandler(backChannelInformingLogoutHandler);
         });
 
@@ -70,11 +81,12 @@ public class SecurityConfig {
     private Stream<String> extractOidcRoles(OidcUserAuthority oidcUserAuthority) {
         Stream.Builder<String> resultStream = Stream.builder();
         resultStream.accept(Role.ANY);
-        var sub = oidcUserAuthority.getIdToken().getClaimAsString("sub");
-        var email = oidcUserAuthority.getIdToken().getClaimAsString("email");
-
-        log.debug("Hello " + email);
-
+        // var sub = oidcUserAuthority.getIdToken().getClaimAsString("sub");
+        // var email = oidcUserAuthority.getIdToken().getClaimAsString("email");
+        // TODO find application roles for sub
+        if ("admin@grossherzogin-elisabeth.de".equals(oidcUserAuthority.getIdToken().getEmail())) {
+            resultStream.accept(Role.ADMIN);
+        }
         var roles = oidcUserAuthority.getIdToken().getClaimAsStringList("ROLES");
         if (roles != null) {
             for (String role : roles) {
@@ -87,6 +99,10 @@ public class SecurityConfig {
     private Stream<String> extractOAuthRoles(OAuth2UserAuthority oAuth2UserAuthority) {
         var roles = oAuth2UserAuthority.getAttributes().get("ROLES");
         Stream.Builder<String> resultStream = Stream.builder();
+        if ("admin@grossherzogin-elisabeth.de".equals(oAuth2UserAuthority.getAttributes().get("email"))) {
+            resultStream.accept(Role.ADMIN);
+        }
+        resultStream.accept(Role.ANY);
         if (roles instanceof Collection<?> roleCollection) {
             for (var item: roleCollection) {
                 if (item instanceof String role) {
@@ -94,7 +110,6 @@ public class SecurityConfig {
                 }
             }
         }
-        resultStream.accept(Role.ANY);
         return resultStream.build();
     }
 }

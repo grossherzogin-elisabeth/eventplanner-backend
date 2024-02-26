@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.io.FileInputStream;
@@ -17,6 +18,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalField;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -67,8 +71,8 @@ public class EventExcelRepository implements EventRepository {
                     "planned",
                     raw[3],
                     "",
-                    parseStartDate(raw[2], year),
-                    parseEndDate(raw[2], year),
+                    parseExcelDate(raw[2], year, 0),
+                    parseExcelDate(raw[2], year, 1),
                     waitinglist
             );
             events.add(event);
@@ -76,33 +80,18 @@ public class EventExcelRepository implements EventRepository {
         return events;
     }
 
-    private Instant parseStartDate(String value, int year) {
+    private Instant parseExcelDate(String value, int year, int index) {
         try {
-            double daysSince1970 = Double.parseDouble(value);
-            long millis = (long) daysSince1970 * 24 * 60 * 60 * 1000;
-            return new Date(millis).toInstant();
+            var instant = Instant.parse(value);
+            if (instant.atZone(ZoneId.of("Europe/Berlin")).getYear() == year) {
+                return instant;
+            }
         } catch (Exception e) {
+            e.printStackTrace();
             // expected
         }
         var dates = value.split("-");
-        var dayMonth = dates[0].trim().replaceAll(" ", "").split("\\.");
-        String format = "yyyy-mm-ddT16:00:00.00Z";
-        format = format.replace("yyyy", String.valueOf(year));
-        format = format.replace("mm", dayMonth[1]);
-        format = format.replace("dd", dayMonth[0]);
-        return Instant.parse(format);
-    }
-
-    private Instant parseEndDate(String value, int year) {
-        try {
-            double daysSince1970 = Double.parseDouble(value);
-            long millis = (long) daysSince1970 * 24 * 60 * 60 * 1000;
-            return new Date(millis).toInstant();
-        } catch (Exception e) {
-            // expected
-        }
-        var dates = value.split("-");
-        var date = dates.length > 1 ? dates[1] : dates[0];
+        var date = dates.length > index ? dates[index] : dates[0];
         var dayMonth = date.trim().replaceAll(" ", "").split("\\.");
         String format = "yyyy-mm-ddT16:00:00.00Z";
         format = format.replace("yyyy", String.valueOf(year));
@@ -184,6 +173,13 @@ public class EventExcelRepository implements EventRepository {
         if (cell == null) {
             return "";
         }
+        try {
+            var date = cell.getDateCellValue();
+            return date.toInstant().toString();
+        } catch (Exception e) {
+            // ignore
+        }
+
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue();
             case NUMERIC -> String.valueOf(cell.getNumericCellValue());
