@@ -1,6 +1,7 @@
-package org.eventplanner.webapp.importer;
+package org.eventplanner.webapp.importer.rest;
 
 import org.eventplanner.webapp.config.Role;
+import org.eventplanner.webapp.importer.ImporterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package org.eventplanner.webapp.positions.mock;
+package org.eventplanner.webapp.positions.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -16,7 +16,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Repository
 public class PositionMockRepository implements PositionRepository {

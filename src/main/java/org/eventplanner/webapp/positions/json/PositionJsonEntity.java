@@ -1,6 +1,5 @@
-package org.eventplanner.webapp.positions.mock;
+package org.eventplanner.webapp.positions.json;
 
-import org.eventplanner.webapp.positions.models.PositionKey;
 import org.springframework.lang.NonNull;
 
 import java.io.Serializable;
