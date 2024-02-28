@@ -26,29 +26,24 @@ public class SecurityConfig {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final String loginSuccessUrl;
-    private final String logoutSuccessUrl;
 
-    public SecurityConfig(
-            @Value("${custom.login-success-url}") String loginSuccessUrl,
-            @Value("${custom.logout-success-url}") String logoutSuccessUrl
-    ) {
+    public SecurityConfig(@Value("${custom.login-success-url}") String loginSuccessUrl) {
         this.loginSuccessUrl = loginSuccessUrl;
-        this.logoutSuccessUrl = logoutSuccessUrl;
     }
 
     @Bean
     public SecurityFilterChain oidcClientCustomizer(
             HttpSecurity http,
-            BackChannelInformingLogoutHandler backChannelInformingLogoutHandler
+            OAuthLogoutHandler oauthLogoutHandler
     ) throws Exception {
         // disable csrf protection
         http.csrf(AbstractHttpConfigurer::disable);
 
-        http.oauth2Login(login -> {
-            // open root page (-> frontend home page) after login
-            login.defaultSuccessUrl(loginSuccessUrl, true);
-            login.authorizationEndpoint(authEndpoint -> authEndpoint.baseUri("/api/v1/login"));
-            login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userAuthoritiesMapper(oAuthGrantedAuthoritiesMapper()));
+        http.oauth2Login(oauth2Login -> {
+            // open frontend home page after login
+            oauth2Login.defaultSuccessUrl(loginSuccessUrl, true);
+            oauth2Login.authorizationEndpoint(authorizationEndpoint -> authorizationEndpoint.baseUri("/auth/login"));
+            oauth2Login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userAuthoritiesMapper(oAuthGrantedAuthoritiesMapper()));
         });
 
         // By default, Spring redirects an unauthorized user to the login page. In this case we want to return a 401
@@ -60,9 +55,8 @@ public class SecurityConfig {
         });
 
         http.logout(logout -> {
-            logout.logoutUrl("/api/v1/logout");
-            logout.addLogoutHandler(backChannelInformingLogoutHandler);
-            logout.logoutSuccessUrl(logoutSuccessUrl);
+            logout.logoutUrl("/auth/logout");
+            logout.addLogoutHandler(oauthLogoutHandler);
         });
 
         http.oidcLogout(logout -> {
@@ -89,7 +83,7 @@ public class SecurityConfig {
         resultStream.accept(Role.ANY);
         // var sub = oidcUserAuthority.getIdToken().getClaimAsString("sub");
         // var email = oidcUserAuthority.getIdToken().getClaimAsString("email");
-        // TODO find application roles for sub
+        // TODO find application roles for sub or email
         if ("admin@grossherzogin-elisabeth.de".equals(oidcUserAuthority.getIdToken().getEmail())) {
             resultStream.accept(Role.ADMIN);
         }
