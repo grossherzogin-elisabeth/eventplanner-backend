@@ -5,6 +5,7 @@ import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.lang.NonNull;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 public record Event(
@@ -16,6 +17,8 @@ public record Event(
         @NonNull String description,
         @NonNull Instant start,
         @NonNull Instant end,
+        @NonNull List<EventLocation> locations,
+        @NonNull List<EventSlot> slots,
         @NonNull Map<UserKey, PositionKey> waitingList
 ) {
 }

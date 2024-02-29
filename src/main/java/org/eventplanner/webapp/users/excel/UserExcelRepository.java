@@ -73,19 +73,23 @@ public class UserExcelRepository implements UserRepository {
             var col = data[i];
             for (int r = 4; r < col.length; r++) {
                 var raw = col[r].trim();
-                if (!raw.isBlank() && !"noch zu besetzen".equals(raw)) {
+                if (raw != null && !raw.isBlank() && !raw.equals("noch zu besetzen") && !raw.contains("Warteliste")) {
                     var key = UserKey.fromName(raw);
                     var name = normalizeName(raw);
-                    var position = mapPosition(data[0][r]);
-                    var user = users.getOrDefault(key, new User(
-                            key,
-                            null,
-                            name[0],
-                            name[1],
-                            name[0]+"."+name[1]+"@email.de",
-                            Collections.singletonList(position)
-                    ));
-                    users.put(key, mergeUserPositions(user, Collections.singletonList(position)));
+                    try {
+                        var position = mapPosition(data[0][r]);
+                        var user = users.getOrDefault(key, new User(
+                                key,
+                                null,
+                                name[0],
+                                name[1],
+                                name[0]+"."+name[1]+"@email.de",
+                                Collections.singletonList(position)
+                        ));
+                        users.put(key, mergeUserPositions(user, Collections.singletonList(position)));
+                    } catch (Exception e) {
+                        log.error("Failed to map user " + raw, e);
+                    }
                 }
             }
         }
@@ -141,6 +145,7 @@ public class UserExcelRepository implements UserRepository {
         return switch (value) {
             case "Kapitän" -> new PositionKey("kapitaen");
             case "Steuermann" -> new PositionKey("steuermann");
+            case "Stm." -> new PositionKey("steuermann");
             case "NOA" -> new PositionKey("noa");
             case "1. Maschinist" -> new PositionKey("maschinist");
             case "2. Maschinist" -> new PositionKey("maschinist");
@@ -151,7 +156,7 @@ public class UserExcelRepository implements UserRepository {
             case "Leichtmatrose" -> new PositionKey("leichtmatrose");
             case "Decksmann / -frau" -> new PositionKey("deckshand");
             case "Backschaft" -> new PositionKey("backschaft");
-            default -> throw new IllegalArgumentException("Unknown position");
+            default -> throw new IllegalArgumentException("Unknown position: " + value);
         };
     }
 }
