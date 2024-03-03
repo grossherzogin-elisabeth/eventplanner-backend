@@ -39,11 +39,7 @@ public class PositionMockRepository implements PositionRepository {
                     .map(it -> new Position(
                             new PositionKey(it.key()),
                             it.name(),
-                            it.color(),
-                            it.prio(),
-                            it.substitutes().stream()
-                                    .map((PositionKey::new))
-                                    .toList()
+                            it.color()
                     ))
                     .toList();
         } catch (Exception e) {

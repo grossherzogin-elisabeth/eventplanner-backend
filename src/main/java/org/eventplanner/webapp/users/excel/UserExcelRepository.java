@@ -1,5 +1,6 @@
 package org.eventplanner.webapp.users.excel;
 
+import org.eventplanner.webapp.config.Role;
 import org.eventplanner.webapp.events.models.Event;
 import org.eventplanner.webapp.positions.models.Position;
 import org.eventplanner.webapp.positions.models.PositionKey;
@@ -84,7 +85,8 @@ public class UserExcelRepository implements UserRepository {
                                 name[0],
                                 name[1],
                                 name[0]+"."+name[1]+"@email.de",
-                                Collections.singletonList(position)
+                                Collections.singletonList(position),
+                                List.of(Role.TEAM_MEMBER)
                         ));
                         users.put(key, mergeUserPositions(user, Collections.singletonList(position)));
                     } catch (Exception e) {
@@ -105,7 +107,8 @@ public class UserExcelRepository implements UserRepository {
                 user.email(),
                 Stream.concat(user.positions().stream(), positions.stream())
                         .distinct()
-                        .toList()
+                        .toList(),
+                user.roles()
         );
     }
 

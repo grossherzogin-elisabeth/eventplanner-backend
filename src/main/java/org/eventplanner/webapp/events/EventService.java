@@ -1,26 +1,22 @@
 package org.eventplanner.webapp.events;
 
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.eventplanner.webapp.config.Permission;
+import org.eventplanner.webapp.config.SignedInUser;
+import org.eventplanner.webapp.events.models.CreateEventSpec;
 import org.eventplanner.webapp.events.models.Event;
+import org.eventplanner.webapp.events.models.EventKey;
+import org.eventplanner.webapp.events.models.EventSlot;
+import org.eventplanner.webapp.events.models.UpdateEventSpec;
+import org.eventplanner.webapp.exceptions.NotImplementedException;
+import org.eventplanner.webapp.positions.models.PositionKey;
+import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class EventService {
@@ -30,11 +26,67 @@ public class EventService {
         this.eventRepository = eventRepository;
     }
 
-    public @NonNull List<Event> getEvents(int year) {
+    public @NonNull List<Event> getEvents(@NonNull SignedInUser signedInUser, int year) {
+        signedInUser.assertHasPermission(Permission.READ_EVENTS);
+
         var currentYear = Instant.now().atZone(ZoneId.of("Europe/Berlin")).getYear();
         if (year < currentYear - 10 || year > currentYear + 10) {
             throw new IllegalArgumentException("Invalid year");
         }
         return this.eventRepository.findAllByYear(year);
+    }
+
+    public @NonNull Event createEvent(@NonNull SignedInUser signedInUser, @NonNull CreateEventSpec spec) {
+        signedInUser.assertHasPermission(Permission.WRITE_EVENTS);
+
+        throw new NotImplementedException();
+    }
+
+    public @NonNull Event updateEvent(@NonNull SignedInUser signedInUser, @NonNull EventKey eventKey, @NonNull UpdateEventSpec spec) {
+        signedInUser.assertHasPermission(Permission.WRITE_EVENTS);
+
+        throw new NotImplementedException();
+    }
+
+    public @NonNull Event updateEventTeam(@NonNull SignedInUser signedInUser, @NonNull EventKey eventKey, @NonNull List<EventSlot> slots) {
+        signedInUser.assertHasPermission(Permission.WRITE_EVENT_TEAM);
+
+        throw new NotImplementedException();
+    }
+
+    public void deleteEvent(@NonNull SignedInUser signedInUser, @NonNull EventKey eventKey) {
+        signedInUser.assertHasPermission(Permission.WRITE_EVENTS);
+
+        throw new NotImplementedException();
+    }
+
+    public @NonNull Event addUserToWaitingList(@NonNull SignedInUser signedInUser, @NonNull EventKey eventKey, @NonNull  UserKey userKey, @NonNull PositionKey positionkey) {
+        if (userKey.equals(signedInUser.key())) {
+            signedInUser.assertHasAnyPermission(Permission.JOIN_LEAVE_EVENT_TEAM, Permission.WRITE_EVENT_TEAM);
+        } else {
+            signedInUser.assertHasPermission(Permission.WRITE_EVENT_TEAM);
+        }
+
+        throw new NotImplementedException();
+    }
+
+    public @NonNull Event removeUserFromWaitingList(@NonNull SignedInUser signedInUser, @NonNull EventKey eventKey, @NonNull  UserKey userKey) {
+        if (userKey.equals(signedInUser.key())) {
+            signedInUser.assertHasAnyPermission(Permission.JOIN_LEAVE_EVENT_TEAM, Permission.WRITE_EVENT_TEAM);
+        } else {
+            signedInUser.assertHasPermission(Permission.WRITE_EVENT_TEAM);
+        }
+
+        throw new NotImplementedException();
+    }
+
+    public @NonNull Event removeUserFromTeam(@NonNull SignedInUser signedInUser, @NonNull EventKey eventKey, @NonNull  UserKey userKey) {
+        if (userKey.equals(signedInUser.key())) {
+            signedInUser.assertHasAnyPermission(Permission.JOIN_LEAVE_EVENT_TEAM, Permission.WRITE_EVENT_TEAM);
+        } else {
+            signedInUser.assertHasPermission(Permission.WRITE_EVENT_TEAM);
+        }
+
+        throw new NotImplementedException();
     }
 }

@@ -1,14 +1,15 @@
 package org.eventplanner.webapp.positions.rest;
 
-import org.eventplanner.webapp.config.Role;
+import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.events.rest.EventRepresentation;
 import org.eventplanner.webapp.positions.PositionService;
+import org.eventplanner.webapp.positions.models.Position;
 import org.eventplanner.webapp.positions.models.PositionKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,30 +29,39 @@ public class PositionController {
         this.positionService = positionService;
     }
 
-    @Secured(Role.ADMIN)
     @RequestMapping(method = RequestMethod.POST, path = "")
-    public ResponseEntity<EventRepresentation> createPosition() {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    public ResponseEntity<PositionRepresentation> createPosition(@RequestBody PositionRepresentation spec) {
+        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+
+        var positionSpec = new Position(new PositionKey(""), spec.name(), spec.color());
+        var position = positionService.createPosition(signedInUser, positionSpec);
+        return ResponseEntity.status(HttpStatus.CREATED).body(PositionRepresentation.fromDomain(position));
     }
 
-    @Secured(Role.ANY)
     @RequestMapping(method = RequestMethod.GET, path = "")
     public ResponseEntity<List<PositionRepresentation>> getPositions() {
-        var positions = this.positionService.getPosition().stream()
+        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+
+        var positions = positionService.getPosition(signedInUser).stream()
                 .map(PositionRepresentation::fromDomain)
                 .toList();
         return ResponseEntity.ok(positions);
     }
 
-    @Secured(Role.ADMIN)
-    @RequestMapping(method = RequestMethod.PUT, path = "/{key}")
-    public ResponseEntity<EventRepresentation> updatePosition(@PathVariable String key, @RequestBody EventRepresentation spec) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    @RequestMapping(method = RequestMethod.PUT, path = "/{positionKey}")
+    public ResponseEntity<PositionRepresentation> updatePosition(@PathVariable String positionKey, @RequestBody PositionRepresentation spec) {
+        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+
+        var positionSpec = new Position(new PositionKey(positionKey), spec.name(), spec.color());
+        var position = positionService.updatePosition(signedInUser, positionSpec.key(), positionSpec);
+        return ResponseEntity.ok(PositionRepresentation.fromDomain(position));
     }
 
-    @Secured(Role.ADMIN)
-    @RequestMapping(method = RequestMethod.DELETE, path = "/{key}")
-    public ResponseEntity<EventRepresentation> deletePosition(@PathVariable String key) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    @RequestMapping(method = RequestMethod.DELETE, path = "/{positionKey}")
+    public ResponseEntity<Void> deletePosition(@PathVariable String positionKey) {
+        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+
+        positionService.deletePosition(signedInUser, new PositionKey(positionKey));
+        return ResponseEntity.ok().build();
     }
 }

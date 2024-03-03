@@ -1,6 +1,8 @@
 package org.eventplanner.webapp.importer;
 
-import org.apache.poi.util.IOUtils;
+import org.eventplanner.webapp.config.Permission;
+import org.eventplanner.webapp.config.SignedInUser;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -11,7 +13,10 @@ import java.nio.file.StandardCopyOption;
 
 @Service
 public class ImporterService {
-    public void importFile(InputStream stream, String filename) {
+    public void importFile(@NonNull SignedInUser signedInUser, InputStream stream, String filename) {
+        signedInUser.assertHasPermission(Permission.WRITE_EVENTS);
+        signedInUser.assertHasPermission(Permission.WRITE_USERS);
+
         File targetFile = new File("/tmp/eventplanner/data/" + filename);
         targetFile.mkdirs();
         try {

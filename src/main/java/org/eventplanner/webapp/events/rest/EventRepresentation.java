@@ -2,13 +2,10 @@ package org.eventplanner.webapp.events.rest;
 
 import org.eventplanner.webapp.events.models.Event;
 import org.eventplanner.webapp.positions.models.PositionKey;
-import org.eventplanner.webapp.users.models.User;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.lang.NonNull;
 
 import java.io.Serializable;
-import java.time.Instant;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +24,7 @@ public record EventRepresentation(
 
     public static EventRepresentation fromDomain(@NonNull Event event) {
         return new EventRepresentation(
-                event.key(),
+                event.key().value(),
                 event.name(),
                 event.note(),
                 event.description(),

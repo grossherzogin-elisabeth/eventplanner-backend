@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public record Event(
-        @NonNull String key,
+        @NonNull EventKey key,
         @NonNull String name,
         @NonNull String templateKey,
         @NonNull String state,

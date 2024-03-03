@@ -8,8 +8,6 @@ import java.util.List;
 public record PositionJsonEntity(
         @NonNull String key,
         @NonNull String name,
-        @NonNull String color,
-        @NonNull int prio,
-        @NonNull List<String> substitutes
+        @NonNull String color
 ) implements Serializable {
 }

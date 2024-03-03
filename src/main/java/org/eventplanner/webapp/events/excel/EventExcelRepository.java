@@ -2,6 +2,8 @@ package org.eventplanner.webapp.events.excel;
 
 import org.eventplanner.webapp.events.EventRepository;
 import org.eventplanner.webapp.events.models.Event;
+import org.eventplanner.webapp.events.models.EventKey;
+import org.eventplanner.webapp.events.models.EventLocation;
 import org.eventplanner.webapp.events.models.EventSlot;
 import org.eventplanner.webapp.positions.models.PositionKey;
 import org.eventplanner.webapp.users.models.UserKey;
@@ -81,7 +83,7 @@ public class EventExcelRepository implements EventRepository {
                 }
             }
             var event = new Event(
-                    String.valueOf(i),
+                    new EventKey(String.valueOf(i)),
                     raw[1],
                     "default",
                     "planned",
@@ -89,7 +91,7 @@ public class EventExcelRepository implements EventRepository {
                     "",
                     parseExcelDate(raw[2], year, 0),
                     parseExcelDate(raw[2], year, 1),
-                    Collections.emptyList(),
+                    getLocationsFromText(raw[1]),
                     slots,
                     waitinglist
             );
@@ -150,6 +152,46 @@ public class EventExcelRepository implements EventRepository {
         throw new IllegalArgumentException("No matching slot found");
     }
 
+    private List<EventLocation> getLocationsFromText(String text) {
+        var elsfleth = new EventLocation("Elsfleth", "fa-anchor", "An d. Kaje 1, 26931 Elsfleth", "DE");
+        var bremerhaven = new EventLocation("Bremerhaven", "fa-anchor", null, "DE");
+        var rosstock = new EventLocation("Rosstock", "fa-anchor", null, "DE");
+        var mariehamn = new EventLocation("Mariehamn", "fa-anchor", null, "FI");
+        var stettin = new EventLocation("Stettin", "fa-anchor", null, "PL");
+        var nok = new EventLocation("Nord-Ostsee-Kanal", "fa-water text-blue-600", null, "DE");
+        var nordsee = new EventLocation("Nordsee", "fa-water text-blue-600",null,null);
+        var ostsee = new EventLocation("Ostsee", "fa-water text-blue-600",null,null);
+        var weser = new EventLocation("Weser", "fa-water text-blue-600",null,null);
+
+        var textNormalized = text.replaceAll("\s", "").toLowerCase();
+
+        if (textNormalized.contains("elsfleth-nordsee-elsfleth")) {
+            return List.of(elsfleth, nordsee, elsfleth);
+        }
+        if (textNormalized.contains("sr1")) {
+            return List.of(elsfleth, nok, mariehamn);
+        }
+        if (textNormalized.contains("sr2")) {
+            return List.of(mariehamn, ostsee, stettin);
+        }
+        if (textNormalized.contains("sr3")) {
+            return List.of(stettin, ostsee, rosstock);
+        }
+        if (textNormalized.contains("sr4")) {
+            return List.of(rosstock, nok, bremerhaven);
+        }
+        if (textNormalized.contains("maritimetage")) {
+            return List.of(bremerhaven, nordsee, bremerhaven);
+        }
+        if (textNormalized.contains("hansesail")) {
+            return List.of(rosstock, ostsee, rosstock);
+        }
+        if (textNormalized.contains("tagesfahrt") || textNormalized.contains("abendfahrt")) {
+            return List.of(elsfleth, weser, elsfleth);
+        }
+        return List.of(elsfleth, nordsee, elsfleth);
+    }
+
     private List<EventSlot> generateDefaultEventSlots() {
         var slots = new ArrayList<EventSlot>();
         slots.add(EventSlot.of(POSITION_KAPITAEN).withRequired());
@@ -163,6 +205,7 @@ public class EventExcelRepository implements EventRepository {
         slots.add(EventSlot.of(POSITION_KOCH).withRequired());
         slots.add(EventSlot.of(POSITION_KOCH).withRequired());
         slots.add(EventSlot.of(POSITION_KOCH));
+        slots.add(EventSlot.of(POSITION_MATROSE, POSITION_LEICHTMATROSE, POSITION_AUSBILDER).withRequired());
         slots.add(EventSlot.of(POSITION_MATROSE, POSITION_LEICHTMATROSE, POSITION_AUSBILDER).withRequired());
         slots.add(EventSlot.of(POSITION_MATROSE, POSITION_LEICHTMATROSE, POSITION_AUSBILDER).withRequired());
         slots.add(EventSlot.of(POSITION_MATROSE, POSITION_LEICHTMATROSE, POSITION_AUSBILDER).withRequired());

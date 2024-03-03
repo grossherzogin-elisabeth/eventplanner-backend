@@ -16,29 +16,13 @@ public record EventSlot(
         @Nullable UserKey assignedUser,
         @Nullable PositionKey assignedPosition
 ) {
-    public EventSlot(
-            int order,
-            boolean required,
-            @NonNull List<PositionKey> positions
-    ) {
-        this(order, required, positions, null, null, null);
-    }
-
-    public EventSlot(
-            int order,
-            boolean required,
-            @NonNull List<PositionKey> positions,
-            @Nullable String name
-    ) {
-        this(order, required, positions, name, null, null);
-    }
 
     public static EventSlot of(PositionKey... positions) {
         return new EventSlot(0, false, List.of(positions), null, null, null);
     }
 
     public EventSlot withRequired() {
-        return new EventSlot(order, required, positions, name, assignedUser, assignedPosition);
+        return new EventSlot(order, true, positions, name, assignedUser, assignedPosition);
     }
 
     public EventSlot withPositions(PositionKey... positions) {
