@@ -14,30 +14,35 @@ public record EventSlot(
         @NonNull List<PositionKey> positions,
         @Nullable String name,
         @Nullable UserKey assignedUser,
+        @Nullable String assignedPersonName,
         @Nullable PositionKey assignedPosition
 ) {
 
     public static EventSlot of(PositionKey... positions) {
-        return new EventSlot(0, false, List.of(positions), null, null, null);
+        return new EventSlot(0, false, List.of(positions), null, null,null, null);
     }
 
     public EventSlot withRequired() {
-        return new EventSlot(order, true, positions, name, assignedUser, assignedPosition);
+        return new EventSlot(order, true, positions, name, assignedUser, assignedPersonName, assignedPosition);
     }
 
     public EventSlot withPositions(PositionKey... positions) {
-        return new EventSlot(order, required, List.of(positions), name, assignedUser, assignedPosition);
+        return new EventSlot(order, required, List.of(positions), name, assignedUser, assignedPersonName, assignedPosition);
     }
 
     public EventSlot withOrder(int order) {
-        return new EventSlot(order, required, positions, name, assignedUser, assignedPosition);
+        return new EventSlot(order, required, positions, name, assignedUser, assignedPersonName, assignedPosition);
     }
 
     public EventSlot withName(String name) {
-        return new EventSlot(order, required, positions, name, assignedUser, assignedPosition);
+        return new EventSlot(order, required, positions, name, assignedUser, assignedPersonName, assignedPosition);
     }
 
     public EventSlot withAssignedUser(UserKey userKey, PositionKey positionKey) {
-        return new EventSlot(order, required, positions, name, userKey, positionKey);
+        return new EventSlot(order, required, positions, name, userKey, assignedPersonName, positionKey);
+    }
+
+    public EventSlot withAssignedPerson(String personName, PositionKey positionKey) {
+        return new EventSlot(order, required, positions, name, null, personName, positionKey);
     }
 }

@@ -32,7 +32,7 @@ public class ImporterController {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
 
         try (var stream = file.getInputStream()) {
-            this.importerService.importFile(signedInUser, stream, "events-"+year+".xlsx");
+            this.importerService.importEvents(signedInUser, year, stream);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -44,7 +44,7 @@ public class ImporterController {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
 
         try (var stream = file.getInputStream()) {
-            this.importerService.importFile(signedInUser, stream, "users.xlsx");
+            this.importerService.importUsers(signedInUser, stream);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

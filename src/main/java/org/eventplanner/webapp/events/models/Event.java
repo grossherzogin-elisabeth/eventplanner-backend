@@ -11,8 +11,7 @@ import java.util.Map;
 public record Event(
         @NonNull EventKey key,
         @NonNull String name,
-        @NonNull String templateKey,
-        @NonNull String state,
+        @NonNull EventState state,
         @NonNull String note,
         @NonNull String description,
         @NonNull Instant start,

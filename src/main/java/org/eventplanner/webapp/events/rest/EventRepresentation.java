@@ -13,6 +13,7 @@ import java.util.Map;
 public record EventRepresentation(
         @NonNull String key,
         @NonNull String name,
+        @NonNull String state,
         @NonNull String note,
         @NonNull String description,
         @NonNull String start,
@@ -26,6 +27,7 @@ public record EventRepresentation(
         return new EventRepresentation(
                 event.key().value(),
                 event.name(),
+                event.state().value(),
                 event.note(),
                 event.description(),
                 event.start().toString(),
@@ -38,7 +40,7 @@ public record EventRepresentation(
 
     private static @NonNull Map<String, String> mapWaitingList(@NonNull Map<UserKey, PositionKey> in) {
         var out = new HashMap<String, String>();
-        in.forEach((key1, value) -> out.put(key1.value(), value.value()));
+        in.forEach((key, value) -> out.put(key.value(), value.value()));
         return out;
     }
 }

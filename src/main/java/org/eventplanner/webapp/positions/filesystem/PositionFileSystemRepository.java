@@ -1,4 +1,4 @@
-package org.eventplanner.webapp.positions.json;
+package org.eventplanner.webapp.positions.filesystem;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,13 +18,13 @@ import java.util.Collections;
 import java.util.List;
 
 @Repository
-public class PositionMockRepository implements PositionRepository {
+public class PositionFileSystemRepository implements PositionRepository {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final ResourceLoader resourceLoader;
     private final Gson gson = new GsonBuilder().create();
 
-    public PositionMockRepository(ResourceLoader resourceLoader) {
+    public PositionFileSystemRepository(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
@@ -35,13 +35,7 @@ public class PositionMockRepository implements PositionRepository {
             var reader = new InputStreamReader(in);
             var type = TypeToken.getParameterized(ArrayList.class, PositionJsonEntity.class).getType();
             var json = (List<PositionJsonEntity>) gson.fromJson(reader, type);
-            return json.stream()
-                    .map(it -> new Position(
-                            new PositionKey(it.key()),
-                            it.name(),
-                            it.color()
-                    ))
-                    .toList();
+            return json.stream().map(PositionJsonEntity::toDomain).toList();
         } catch (Exception e) {
             log.error("Failed to read positions from json file", e);
         }

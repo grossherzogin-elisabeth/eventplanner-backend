@@ -17,7 +17,7 @@ public record UserKey(
                 .toLowerCase()
                 .replaceAll("\\s", "") // remove whitespace characters
                 .replaceAll("\\(.*\\)", "") // remove everything in brackets e.g. (this)
-                .replaceAll("[^a-zA-ZöäüÖÄÜß., ]", ""); // remove all non a-z characters
+                .replaceAll("[^a-zA-ZöäüÖÄÜß\\-., ]", ""); // remove all non a-z characters
         if (normalizedName.contains(",")) {
             var parts = normalizedName.split(",");
             normalizedName = parts[1] + parts[0];

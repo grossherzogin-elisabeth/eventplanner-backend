@@ -1,12 +1,10 @@
 package org.eventplanner.webapp.users.rest;
 
-import org.eventplanner.webapp.users.models.AuthKey;
-import org.eventplanner.webapp.users.models.User;
+import org.eventplanner.webapp.users.models.UserDetails;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
-import java.util.Optional;
 
 public record UserDetailsRepresentation(
         @NonNull String key,
@@ -14,7 +12,7 @@ public record UserDetailsRepresentation(
         @NonNull String firstName,
         @NonNull String lastName
 ) implements Serializable {
-    public static UserDetailsRepresentation fromDomain(@NonNull User user) {
+    public static UserDetailsRepresentation fromDomain(@NonNull UserDetails user) {
         return new UserDetailsRepresentation(
                 user.key().value(),
                 user.authKey() != null ? user.authKey().value() : null,

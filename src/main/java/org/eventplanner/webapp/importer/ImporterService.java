@@ -2,27 +2,46 @@ package org.eventplanner.webapp.importer;
 
 import org.eventplanner.webapp.config.Permission;
 import org.eventplanner.webapp.config.SignedInUser;
+import org.eventplanner.webapp.events.EventRepository;
+import org.eventplanner.webapp.events.models.Event;
+import org.eventplanner.webapp.users.UserRepository;
+import org.eventplanner.webapp.users.models.UserDetails;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 
 @Service
 public class ImporterService {
-    public void importFile(@NonNull SignedInUser signedInUser, InputStream stream, String filename) {
-        signedInUser.assertHasPermission(Permission.WRITE_EVENTS);
-        signedInUser.assertHasPermission(Permission.WRITE_USERS);
 
-        File targetFile = new File("/tmp/eventplanner/data/" + filename);
-        targetFile.mkdirs();
-        try {
-            Files.copy(stream, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private final EventRepository eventRepository;
+    private final UserRepository userRepository;
+
+    public ImporterService(
+            @Autowired EventRepository eventRepository,
+            @Autowired UserRepository userRepository
+    ) {
+        this.eventRepository = eventRepository;
+        this.userRepository = userRepository;
+    }
+
+    public void importEvents(@NonNull SignedInUser signedInUser, int year, InputStream stream) {
+        signedInUser.assertHasPermission(Permission.WRITE_EVENTS);
+        var users =  userRepository.findAll();
+        var events = EventExcelImporter.readFromInputStream(stream, year, users);
+        eventRepository.deleteAllByYear(year);
+        for (Event event : events) {
+            eventRepository.create(event);
+        }
+    }
+
+    public void importUsers(@NonNull SignedInUser signedInUser, InputStream stream) {
+        signedInUser.assertHasPermission(Permission.WRITE_USERS);
+        var users = UserExcelImporter.readFromInputStream(stream);
+        userRepository.deleteAll();
+        for (UserDetails user : users) {
+            userRepository.create(user);
         }
     }
 }

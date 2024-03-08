@@ -1,7 +1,7 @@
 package org.eventplanner.webapp.users.rest;
 
 import org.eventplanner.webapp.positions.models.PositionKey;
-import org.eventplanner.webapp.users.models.User;
+import org.eventplanner.webapp.users.models.UserDetails;
 import org.springframework.lang.NonNull;
 
 import java.io.Serializable;
@@ -13,7 +13,7 @@ public record UserRepresentation(
         @NonNull  String lastName,
         @NonNull List<String> positions
 ) implements Serializable {
-    public static UserRepresentation fromDomain(@NonNull User user) {
+    public static UserRepresentation fromDomain(@NonNull UserDetails user) {
         return new UserRepresentation(
                 user.key().value(),
                 user.firstName(),

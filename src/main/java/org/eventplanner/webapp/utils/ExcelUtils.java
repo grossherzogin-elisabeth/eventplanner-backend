@@ -10,29 +10,37 @@ import java.io.InputStream;
 import java.util.Collections;
 
 public class ExcelUtils {
+
     public static String[][] readExcelFile(File file) throws IOException {
-        try(InputStream in = new FileInputStream(file)) {
-            var workbook = new XSSFWorkbook(in);
-            var sheet = workbook.getSheetAt(0);
-
-            int colCount = 5;
-            while (!getCellValueAsString(sheet, 0, colCount).isBlank()) {
-                colCount++;
-            }
-
-            var rowCount = 3;
-            while (!getCellValueAsString(sheet, rowCount, 0).isBlank()) {
-                rowCount++;
-            }
-
-            String[][] cells = new String[colCount][rowCount];
-            for (int r = 0; r < rowCount; r++) {
-                for (int c = 0; c < colCount; c++) {
-                    cells[c][r] = getCellValueAsString(sheet, r, c);
-                }
-            }
-            return cells;
+        if (!file.exists()) {
+            return new String[][]{};
         }
+        try(InputStream in = new FileInputStream(file)) {
+            return readExcelFile(in);
+        }
+    }
+
+    public static String[][] readExcelFile(InputStream in) throws IOException {
+        var workbook = new XSSFWorkbook(in);
+        var sheet = workbook.getSheetAt(0);
+
+        int colCount = 5;
+        while (!getCellValueAsString(sheet, 0, colCount).isBlank()) {
+            colCount++;
+        }
+
+        var rowCount = 3;
+        while (!getCellValueAsString(sheet, rowCount, 0).isBlank()) {
+            rowCount++;
+        }
+
+        String[][] cells = new String[colCount][rowCount];
+        for (int r = 0; r < rowCount; r++) {
+            for (int c = 0; c < colCount; c++) {
+                cells[c][r] = getCellValueAsString(sheet, r, c);
+            }
+        }
+        return cells;
     }
 
     private static String getCellValueAsString(XSSFSheet sheet, int r, int c) {

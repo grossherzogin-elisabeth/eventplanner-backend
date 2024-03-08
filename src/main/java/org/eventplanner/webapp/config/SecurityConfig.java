@@ -18,8 +18,6 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -136,28 +134,28 @@ public class SecurityConfig {
         return switch (role) {
             case ADMIN -> Stream.of(Permission.values());
             case NONE -> Stream.of(
-                    Permission.READ_OWN_USER,
-                    Permission.WRITE_OWN_USER
+                    Permission.READ_OWN_USER_DETAILS,
+                    Permission.WRITE_OWN_USER_DETAILS
             );
             case TEAM_MEMBER -> Stream.of(
-                    Permission.READ_OWN_USER,
-                    Permission.WRITE_OWN_USER,
+                    Permission.READ_OWN_USER_DETAILS,
+                    Permission.WRITE_OWN_USER_DETAILS,
                     Permission.READ_EVENTS,
                     Permission.READ_USERS,
                     Permission.READ_POSITIONS,
                     Permission.JOIN_LEAVE_EVENT_TEAM
             );
             case EVENT_PLANNER -> Stream.of(
-                    Permission.READ_OWN_USER,
-                    Permission.WRITE_OWN_USER,
+                    Permission.READ_OWN_USER_DETAILS,
+                    Permission.WRITE_OWN_USER_DETAILS,
                     Permission.READ_EVENTS,
                     Permission.READ_USERS,
                     Permission.READ_POSITIONS,
                     Permission.WRITE_EVENTS
             );
             case TEAM_PLANNER -> Stream.of(
-                    Permission.READ_OWN_USER,
-                    Permission.WRITE_OWN_USER,
+                    Permission.READ_OWN_USER_DETAILS,
+                    Permission.WRITE_OWN_USER_DETAILS,
                     Permission.READ_EVENTS,
                     Permission.READ_USERS,
                     Permission.READ_POSITIONS,
@@ -166,8 +164,8 @@ public class SecurityConfig {
                     Permission.READ_USER_DETAILS
             );
             case USER_MANAGER -> Stream.of(
-                    Permission.READ_OWN_USER,
-                    Permission.WRITE_OWN_USER,
+                    Permission.READ_OWN_USER_DETAILS,
+                    Permission.WRITE_OWN_USER_DETAILS,
                     Permission.READ_EVENTS,
                     Permission.READ_USERS,
                     Permission.READ_POSITIONS,

@@ -9,14 +9,14 @@ public enum Permission {
     JOIN_LEAVE_EVENT_TEAM("event-team:write-self"),
     WRITE_EVENT_TEAM("event-team:write"),
     READ_USERS("users:read"),
-    READ_OWN_USER("user-details:read-self"),
-    WRITE_OWN_USER("user-details:write-self"),
+    READ_OWN_USER_DETAILS("user-details:read-self"),
+    WRITE_OWN_USER_DETAILS("user-details:write-self"),
     READ_USER_DETAILS("user-details:read"),
     WRITE_USERS("users-details:write"),
     READ_POSITIONS("positions:read"),
     WRITE_POSITIONS("positions:write");
 
-    private String value;
+    private final String value;
 
     Permission(String value) {
         this.value = value;

@@ -16,6 +16,7 @@ public record EventSlotRepresentation(
         @NonNull List<String> positionKeys,
         @Nullable String name,
         @Nullable String assignedUserKey,
+        @Nullable String assignedPersonName,
         @Nullable String assignedPositionKey
 ) implements Serializable {
     public static @NonNull EventSlotRepresentation fromDomain(@NonNull EventSlot domain) {
@@ -26,6 +27,7 @@ public record EventSlotRepresentation(
                 domain.positions().stream().map((PositionKey::value)).toList(),
                 domain.name(),
                 domain.assignedUser() != null ? domain.assignedUser().value() : null,
+                domain.assignedPersonName(),
                 domain.assignedPosition() != null ? domain.assignedPosition().value() : null
         );
     }
@@ -37,6 +39,7 @@ public record EventSlotRepresentation(
                 positionKeys().stream().map((PositionKey::new)).toList(),
                 name,
                 assignedUserKey != null ? new UserKey(assignedUserKey) : null,
+                assignedPersonName,
                 assignedPositionKey != null ? new PositionKey(assignedPositionKey) : null
         );
     }
