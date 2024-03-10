@@ -1,11 +1,10 @@
 package org.eventplanner.webapp.users.filesystem;
 
-import org.eventplanner.webapp.events.filesystem.EventJsonEntity;
 import org.eventplanner.webapp.users.UserRepository;
 import org.eventplanner.webapp.users.models.AuthKey;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.eventplanner.webapp.users.models.UserKey;
-import org.eventplanner.webapp.utils.FileSystemRepository;
+import org.eventplanner.webapp.utils.FileSystemJsonRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
@@ -19,11 +18,11 @@ import java.util.Optional;
 @Repository
 public class UserFileSystemRepository implements UserRepository {
 
-    private final FileSystemRepository<UserDetailsJsonEntity> fs;
+    private final FileSystemJsonRepository<UserDetailsJsonEntity> fs;
 
     public UserFileSystemRepository(@Value("${custom.data-directory}") String dataDirectory) {
         var directory = new File(dataDirectory + "/users");
-        this.fs = new FileSystemRepository<>(UserDetailsJsonEntity.class, directory);
+        this.fs = new FileSystemJsonRepository<>(UserDetailsJsonEntity.class, directory);
     }
 
     @Override

@@ -13,19 +13,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class FileSystemRepository<E> {
+public class FileSystemJsonRepository<E> {
 
     private final Gson gson = new GsonBuilder().create();
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final String directory;
     private final Class<E> entityClass;
 
-    public FileSystemRepository(Class<E> e, File directory) {
+    public FileSystemJsonRepository(Class<E> e, File directory) {
         this.entityClass = e;
         this.directory = directory.getPath();
     }

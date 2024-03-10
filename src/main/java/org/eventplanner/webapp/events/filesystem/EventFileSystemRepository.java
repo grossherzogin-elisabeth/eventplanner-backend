@@ -2,8 +2,7 @@ package org.eventplanner.webapp.events.filesystem;
 
 import org.eventplanner.webapp.events.EventRepository;
 import org.eventplanner.webapp.events.models.Event;
-import org.eventplanner.webapp.positions.filesystem.PositionJsonEntity;
-import org.eventplanner.webapp.utils.FileSystemRepository;
+import org.eventplanner.webapp.utils.FileSystemJsonRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
@@ -19,11 +18,11 @@ import static java.util.Comparator.comparing;
 public class EventFileSystemRepository implements EventRepository {
 
     private final File directory;
-    private final FileSystemRepository<EventJsonEntity> fs;
+    private final FileSystemJsonRepository<EventJsonEntity> fs;
 
     public EventFileSystemRepository(@Value("${custom.data-directory}") String dataDirectory) {
         directory = new File(dataDirectory + "/events");
-        this.fs = new FileSystemRepository<>(EventJsonEntity.class, directory);
+        this.fs = new FileSystemJsonRepository<>(EventJsonEntity.class, directory);
     }
 
     @Override

@@ -3,7 +3,7 @@ package org.eventplanner.webapp.positions.filesystem;
 import org.apache.commons.io.FileUtils;
 import org.eventplanner.webapp.positions.PositionRepository;
 import org.eventplanner.webapp.positions.models.Position;
-import org.eventplanner.webapp.utils.FileSystemRepository;
+import org.eventplanner.webapp.utils.FileSystemJsonRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +18,7 @@ import java.util.List;
 public class PositionFileSystemRepository implements PositionRepository {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private final FileSystemRepository<PositionJsonEntity> fs;
+    private final FileSystemJsonRepository<PositionJsonEntity> fs;
 
     public PositionFileSystemRepository(@Value("${custom.data-directory}") String dataDirectory, ResourceLoader resourceLoader) {
         var dir = new File(dataDirectory + "/positions");
@@ -31,7 +31,7 @@ public class PositionFileSystemRepository implements PositionRepository {
                 log.error("Failed to copy bundled positions into data directory", e);
             }
         }
-        this.fs = new FileSystemRepository<>(PositionJsonEntity.class, dir);
+        this.fs = new FileSystemJsonRepository<>(PositionJsonEntity.class, dir);
     }
 
     @Override
