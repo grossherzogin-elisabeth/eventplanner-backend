@@ -14,8 +14,8 @@ public record CreateEventRequest(
         @Nullable String description,
         @NonNull String start,
         @NonNull String end,
-        @NonNull List<EventLocationRepresentation> locations,
-        @NonNull List<EventSlotRepresentation> slots
+        @NonNull List<LocationRepresentation> locations,
+        @NonNull List<SlotRepresentation> slots
 ) implements Serializable {
     public CreateEventSpec toDomain() {
         return new CreateEventSpec(
@@ -24,8 +24,8 @@ public record CreateEventRequest(
                 description,
                 Instant.parse(start),
                 Instant.parse(end),
-                locations.stream().map(EventLocationRepresentation::toDomain).toList(),
-                slots.stream().map(EventSlotRepresentation::toDomain).toList()
+                locations.stream().map(LocationRepresentation::toDomain).toList(),
+                slots.stream().map(SlotRepresentation::toDomain).toList()
         );
     }
 }

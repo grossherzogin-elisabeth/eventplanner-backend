@@ -33,7 +33,7 @@ public class PositionController {
     public ResponseEntity<PositionRepresentation> createPosition(@RequestBody PositionRepresentation spec) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
 
-        var positionSpec = new Position(new PositionKey(""), spec.name(), spec.color());
+        var positionSpec = new Position(new PositionKey(""), spec.name(), spec.color(), spec.prio());
         var position = positionService.createPosition(signedInUser, positionSpec);
         return ResponseEntity.status(HttpStatus.CREATED).body(PositionRepresentation.fromDomain(position));
     }
@@ -52,7 +52,7 @@ public class PositionController {
     public ResponseEntity<PositionRepresentation> updatePosition(@PathVariable String positionKey, @RequestBody PositionRepresentation spec) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
 
-        var positionSpec = new Position(new PositionKey(positionKey), spec.name(), spec.color());
+        var positionSpec = new Position(new PositionKey(positionKey), spec.name(), spec.color(), spec.prio());
         var position = positionService.updatePosition(signedInUser, positionSpec.key(), positionSpec);
         return ResponseEntity.ok(PositionRepresentation.fromDomain(position));
     }

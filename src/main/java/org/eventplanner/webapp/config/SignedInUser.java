@@ -15,6 +15,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -90,5 +91,14 @@ public record SignedInUser(
         }
         log.warn("Provided authentication is of unknown type: " + authentication.getClass().getName());
         throw new UnauthorizedException();
+    }
+
+    public static @NonNull SignedInUser technicalUser(Permission ...permissions) {
+        return new SignedInUser(
+                new UserKey("technical-user"),
+                new AuthKey("technical-user"),
+                List.of(Role.TECHNICAL_USER),
+                List.of(permissions),
+                "technical-user");
     }
 }

@@ -12,6 +12,7 @@ public record UpdateEventSpec(
         @Nullable String description,
         @Nullable Instant start,
         @Nullable Instant end,
-        @Nullable List<EventLocation> locations
+        @Nullable List<Location> locations,
+        @Nullable List<Slot> slots
 ) {
 }

@@ -9,9 +9,11 @@ import java.io.Serializable;
 public record PositionJsonEntity(
         @NonNull String key,
         @NonNull String name,
-        @NonNull String color
+        @NonNull String color,
+        @NonNull int prio
+
 ) implements Serializable {
     public Position toDomain() {
-        return new Position(new PositionKey(key), name, color);
+        return new Position(new PositionKey(key), name, color, prio);
     }
 }

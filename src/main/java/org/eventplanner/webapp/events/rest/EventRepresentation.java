@@ -18,9 +18,9 @@ public record EventRepresentation(
         @NonNull String description,
         @NonNull String start,
         @NonNull String end,
-        @NonNull List<EventLocationRepresentation> locations,
-        @NonNull List<EventSlotRepresentation> slots,
-        @NonNull Map<String, String> waitingList
+        @NonNull List<LocationRepresentation> locations,
+        @NonNull List<SlotRepresentation> slots,
+        @NonNull List<RegistrationRepresentation> registrations
 ) implements Serializable {
 
     public static EventRepresentation fromDomain(@NonNull Event event) {
@@ -32,15 +32,8 @@ public record EventRepresentation(
                 event.description(),
                 event.start().toString(),
                 event.end().toString(),
-                event.locations().stream().map(EventLocationRepresentation::fromDomain).toList(),
-                event.slots().stream().map(EventSlotRepresentation::fromDomain).toList(),
-                mapWaitingList(event.waitingList())
-        );
-    }
-
-    private static @NonNull Map<String, String> mapWaitingList(@NonNull Map<UserKey, PositionKey> in) {
-        var out = new HashMap<String, String>();
-        in.forEach((key, value) -> out.put(key.value(), value.value()));
-        return out;
+                event.locations().stream().map(LocationRepresentation::fromDomain).toList(),
+                event.slots().stream().map(SlotRepresentation::fromDomain).toList(),
+                event.registrations().stream().map(RegistrationRepresentation::fromDomain).toList());
     }
 }

@@ -18,42 +18,38 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class FileSystemRepository<T, E> {
+public class FileSystemRepository<E> {
 
     private final Gson gson = new GsonBuilder().create();
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final String directory;
     private final Class<E> entityClass;
 
-    public abstract String getKey(T domain);
-    public abstract E mapToEntity(T domain);
-    public abstract T mapToDomain(E entity);
-
     public FileSystemRepository(Class<E> e, File directory) {
         this.entityClass = e;
         this.directory = directory.getPath();
     }
 
-    public @NonNull List<T> findAll() {
+    public @NonNull List<E> findAll() {
         var dir = new File(directory);
         return readAllFromDirectory(dir);
     }
 
-    public @NonNull Optional<T> findByKey(@NonNull String key) {
+    public @NonNull Optional<E> findByKey(@NonNull String key) {
         var file = new File(directory + "/"  + key + ".json");
         return readFromFile(file);
     }
 
-    public @NonNull T create(@NonNull T t) {
-        var file = new File(directory + "/" + getKey(t)  + ".json");
-        writeToFile(file, t);
-        return t;
+    public @NonNull E create(@NonNull String key, @NonNull E entity) {
+        var file = new File(directory + "/" + key  + ".json");
+        writeToFile(file, entity);
+        return entity;
     }
 
-    public @NonNull T update(@NonNull T t) {
-        var file = new File(directory + "/" + getKey(t)  + ".json");
-        writeToFile(file, t);
-        return t;
+    public @NonNull E update(@NonNull String key, @NonNull E entity) {
+        var file = new File(directory + "/" + key  + ".json");
+        writeToFile(file, entity);
+        return entity;
     }
 
     public void deleteByKey(@NonNull String key) {
@@ -71,7 +67,7 @@ public abstract class FileSystemRepository<T, E> {
         deleteAllInDirectory(dir);
     }
 
-    protected void deleteAllInDirectory(@NonNull File dir) {
+    public void deleteAllInDirectory(@NonNull File dir) {
         if (!dir.exists()) {
             return;
         }
@@ -89,7 +85,7 @@ public abstract class FileSystemRepository<T, E> {
         }
     }
 
-    protected @NonNull List<T> readAllFromDirectory(@NonNull File dir) {
+    public @NonNull List<E> readAllFromDirectory(@NonNull File dir) {
         if (!dir.exists() || !dir.isDirectory()) {
             return Collections.emptyList();
         }
@@ -98,34 +94,33 @@ public abstract class FileSystemRepository<T, E> {
             return Collections.emptyList();
         }
 
-        var domains = new ArrayList<T>();
+        var entities = new ArrayList<E>();
         for (File file : files) {
             if (file.isDirectory()) {
-                domains.addAll(readAllFromDirectory(file));
+                entities.addAll(readAllFromDirectory(file));
             } else {
-                readFromFile(file).ifPresent(domains::add);
+                readFromFile(file).ifPresent(entities::add);
             }
         }
-        return domains;
+        return entities;
     }
 
-    protected @NonNull Optional<T> readFromFile(@NonNull File file) {
+    public @NonNull Optional<E> readFromFile(@NonNull File file) {
         if (!file.exists()) {
             return Optional.empty();
         }
         try(InputStream in = new FileInputStream(file)) {
             var reader = new InputStreamReader(in);
             var entity = gson.fromJson(reader, entityClass);
-            return Optional.of(mapToDomain(entity));
+            return Optional.of(entity);
         } catch (Exception e) {
             log.error("Failed to read user from json file", e);
         }
         return Optional.empty();
     }
 
-    protected void writeToFile(@NonNull File file, @NonNull T t) {
+    public void writeToFile(@NonNull File file, @NonNull E entity) {
         new File(file.getParent()).mkdirs();
-        var entity = mapToEntity(t);
         var json = gson.toJson(entity);
         try {
             Files.writeString(file.toPath(), json);

@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.eventplanner.webapp.utils.ObjectUtils.mapNullable;
+
 public record EventJsonEntity(
         @NonNull String key,
         @NonNull String name,
@@ -23,9 +25,9 @@ public record EventJsonEntity(
         @Nullable String description,
         @NonNull String start,
         @NonNull String end,
-        @Nullable List<EventLocationJsonEntity> locations,
-        @Nullable List<EventSlotJsonEntity> slots,
-        @Nullable Map<String, String> waitingList
+        @Nullable List<LocationJsonEntity> locations,
+        @Nullable List<SlotJsonEntity> slots,
+        @Nullable List<RegistrationJsonEntity> registrations
 ) implements Serializable {
     public static @NonNull EventJsonEntity fromDomain(@NonNull Event domain) {
         return new EventJsonEntity(
@@ -36,10 +38,9 @@ public record EventJsonEntity(
                 domain.description(),
                 domain.start().toString(),
                 domain.end().toString(),
-                domain.locations().stream().map(EventLocationJsonEntity::fromDomain).toList(),
-                domain.slots().stream().map(EventSlotJsonEntity::fromDomain).toList(),
-                mapWaitingListToEntity(domain.waitingList())
-        );
+                domain.locations().stream().map(LocationJsonEntity::fromDomain).toList(),
+                domain.slots().stream().map(SlotJsonEntity::fromDomain).toList(),
+                domain.registrations().stream().map(RegistrationJsonEntity::fromDomain).toList());
     }
 
     public Event toDomain() {
@@ -51,26 +52,8 @@ public record EventJsonEntity(
                 description != null ? description : "",
                 Instant.parse(start),
                 Instant.parse(end),
-                locations != null
-                        ? locations.stream().map(EventLocationJsonEntity::toDomain).toList()
-                        : Collections.emptyList(),
-                slots != null
-                        ? slots.stream().map(EventSlotJsonEntity::toDomain).toList()
-                        : Collections.emptyList(),
-                waitingList != null
-                        ? mapWaitingListToDomain(waitingList)
-                        : Collections.emptyMap());
-    }
-
-    private static @NonNull Map<UserKey, PositionKey> mapWaitingListToDomain(@NonNull Map<String, String> in) {
-        var out = new HashMap<UserKey, PositionKey>();
-        in.forEach((key, value) -> out.put(new UserKey(key), new PositionKey(value)));
-        return out;
-    }
-
-    private static @NonNull Map<String, String> mapWaitingListToEntity(@NonNull Map<UserKey, PositionKey> in) {
-        var out = new HashMap<String, String>();
-        in.forEach((key, value) -> out.put(key.value(), value.value()));
-        return out;
+                mapNullable(locations, LocationJsonEntity::toDomain, Collections.emptyList()),
+                mapNullable(slots, SlotJsonEntity::toDomain, Collections.emptyList()),
+                mapNullable(registrations, RegistrationJsonEntity::toDomain, Collections.emptyList()));
     }
 }

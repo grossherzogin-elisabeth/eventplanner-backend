@@ -2,7 +2,9 @@ package org.eventplanner.webapp.events.filesystem;
 
 import org.eventplanner.webapp.events.EventRepository;
 import org.eventplanner.webapp.events.models.Event;
+import org.eventplanner.webapp.positions.filesystem.PositionJsonEntity;
 import org.eventplanner.webapp.utils.FileSystemRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
@@ -11,27 +13,34 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
+import static java.util.Comparator.comparing;
+
 @Repository
-public class EventFileSystemRepository extends FileSystemRepository<Event, EventJsonEntity> implements EventRepository {
+public class EventFileSystemRepository implements EventRepository {
 
-    private static final String directory = "/tmp/eventplanner/data/events";
+    private final File directory;
+    private final FileSystemRepository<EventJsonEntity> fs;
 
-    public EventFileSystemRepository() {
-        super(EventJsonEntity.class, new File(directory));
+    public EventFileSystemRepository(@Value("${custom.data-directory}") String dataDirectory) {
+        directory = new File(dataDirectory + "/events");
+        this.fs = new FileSystemRepository<>(EventJsonEntity.class, directory);
     }
 
     @Override
     public @NonNull List<Event> findAllByYear(int year) {
-        var dir = new File(directory + "/" + year);
-        return readAllFromDirectory(dir);
+        var dir = new File(directory.getPath() + "/" + year);
+        return fs.readAllFromDirectory(dir).stream()
+                .map(EventJsonEntity::toDomain)
+                .sorted(comparing(Event::start))
+                .toList();
     }
 
     @Override
     public @NonNull Event create(@NonNull Event event) {
         var year = event.start().atZone(ZoneId.of("Europe/Berlin")).getYear();
         var key =  UUID.randomUUID().toString();
-        var file = new File(directory + "/" + year + "/" + key  + ".json");
-        writeToFile(file, event);
+        var file = new File(directory.getPath() + "/" + year + "/" + key  + ".json");
+        fs.writeToFile(file, EventJsonEntity.fromDomain(event));
         return event;
     }
 
@@ -39,29 +48,14 @@ public class EventFileSystemRepository extends FileSystemRepository<Event, Event
     public @NonNull Event update(@NonNull Event event) {
         var year = event.start().atZone(ZoneId.of("Europe/Berlin")).getYear();
         var key =  UUID.randomUUID().toString();
-        var file = new File(directory + "/" + year + "/" + key  + ".json");
-        writeToFile(file, event);
+        var file = new File(directory.getPath() + "/" + year + "/" + key  + ".json");
+        fs.writeToFile(file, EventJsonEntity.fromDomain(event));
         return event;
     }
 
     @Override
     public void deleteAllByYear(int year) {
-        var dir = new File(directory + "/"+year);
-        deleteAllInDirectory(dir);
-    }
-
-    @Override
-    public String getKey(Event domain) {
-        return domain.key().value();
-    }
-
-    @Override
-    public EventJsonEntity mapToEntity(Event domain) {
-        return EventJsonEntity.fromDomain(domain);
-    }
-
-    @Override
-    public Event mapToDomain(EventJsonEntity entity) {
-        return entity.toDomain();
+        var dir = new File(directory.getPath() + "/"+year);
+        fs.deleteAllInDirectory(dir);
     }
 }

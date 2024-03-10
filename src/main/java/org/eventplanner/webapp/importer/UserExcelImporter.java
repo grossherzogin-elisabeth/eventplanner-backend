@@ -68,8 +68,21 @@ public class UserExcelImporter {
     private static @NonNull List<UserDetails> parseUsers(@NonNull String[][] data) {
         var users = new HashMap<UserKey, UserDetails>();
         for (int r = 1; r < data[0].length; r++) {
-            var lastName = data[COL_LASTNAME][r].trim();
             var firstName = data[COL_FIRSTNAME][r].trim();
+            var lastName = data[COL_LASTNAME][r].trim();
+            String secondName = null;
+            String title = null;
+            if (firstName.contains(" ")) {
+                var parts = firstName.split(" ");
+                firstName = parts[0];
+                for (int i = 1; i < parts.length; i++) {
+                    secondName = (secondName + " " + parts[i]).trim();
+                }
+            }
+            if (lastName.startsWith("Dr.")) {
+                lastName = lastName.substring(4);
+                title = "Dr.";
+            }
             var key = UserKey.fromName(firstName + " " + lastName);
             var position = mapPosition(data[COL_POSITION][r]);
             UserDetails user = users.get(key);
@@ -79,7 +92,12 @@ public class UserExcelImporter {
                 var town = data[COL_TOWN][r].trim();;
                 Address address = null;
                 if (!street.isBlank() && !zipcode.isBlank() && !town.isBlank()) {
-                    address = new Address(street, town, Integer.parseInt(zipcode));
+                    try {
+                        address = new Address(street, town, Integer.parseInt(zipcode));
+                    } catch (NumberFormatException e) {
+                        // TODO zipcodes are parsed as dates...
+                        // log.warn("Failed to pare user address " + street + ", " + zipcode + " " + town);
+                    }
                 }
                 var email = data[COL_EMAIL][r].trim();
                 var mobile = data[COL_MOBILE][r].trim();;
@@ -90,7 +108,9 @@ public class UserExcelImporter {
                 user = new UserDetails(
                         key,
                         null,
+                        title,
                         firstName,
+                        secondName,
                         lastName,
                         Collections.emptyList(),
                         List.of(Role.TEAM_MEMBER),

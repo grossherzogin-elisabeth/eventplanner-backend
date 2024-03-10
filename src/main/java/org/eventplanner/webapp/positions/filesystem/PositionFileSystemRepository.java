@@ -1,44 +1,41 @@
 package org.eventplanner.webapp.positions.filesystem;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+import org.apache.commons.io.FileUtils;
 import org.eventplanner.webapp.positions.PositionRepository;
 import org.eventplanner.webapp.positions.models.Position;
-import org.eventplanner.webapp.positions.models.PositionKey;
+import org.eventplanner.webapp.utils.FileSystemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ResourceLoader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+import org.springframework.core.io.ResourceLoader;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 @Repository
 public class PositionFileSystemRepository implements PositionRepository {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private final ResourceLoader resourceLoader;
-    private final Gson gson = new GsonBuilder().create();
+    private final FileSystemRepository<PositionJsonEntity> fs;
 
-    public PositionFileSystemRepository(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
+    public PositionFileSystemRepository(@Value("${custom.data-directory}") String dataDirectory, ResourceLoader resourceLoader) {
+        var dir = new File(dataDirectory + "/positions");
+        if (!dir.exists()) {
+            try {
+                var resource = resourceLoader.getResource("classpath:data/positions");
+                var sourceDir = resource.getFile();
+                FileUtils.copyDirectory(sourceDir, dir);
+            } catch (IOException e) {
+                log.error("Failed to copy bundled positions into data directory", e);
+            }
+        }
+        this.fs = new FileSystemRepository<>(PositionJsonEntity.class, dir);
     }
 
     @Override
     public List<Position> findAll() {
-        var resource = this.resourceLoader.getResource("classpath:data/positions.json");
-        try(InputStream in = resource.getInputStream()) {
-            var reader = new InputStreamReader(in);
-            var type = TypeToken.getParameterized(ArrayList.class, PositionJsonEntity.class).getType();
-            var json = (List<PositionJsonEntity>) gson.fromJson(reader, type);
-            return json.stream().map(PositionJsonEntity::toDomain).toList();
-        } catch (Exception e) {
-            log.error("Failed to read positions from json file", e);
-        }
-        return Collections.emptyList();
+        return fs.findAll().stream().map(PositionJsonEntity::toDomain).toList();
     }
 }

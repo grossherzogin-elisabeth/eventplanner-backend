@@ -39,3 +39,5 @@ application-local.properties
 
 ### MacOS ###
 .DS_Store
+
+/data/

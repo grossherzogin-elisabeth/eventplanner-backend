@@ -8,14 +8,15 @@ import org.springframework.lang.Nullable;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
 public record UserDetails(
         @NonNull UserKey key,
         @Nullable AuthKey authKey,
+        @Nullable String title,
         @NonNull String firstName,
+        @Nullable String secondName,
         @NonNull String lastName,
         @NonNull List<PositionKey> positions,
         @NonNull List<Role> roles,
@@ -30,30 +31,17 @@ public record UserDetails(
         @Nullable String comment
 ) {
 
-    public UserDetails(
-            @NonNull UserKey key,
-            @NonNull String firstName,
-            @NonNull String lastName,
-            @NonNull List<PositionKey> positions,
-            @NonNull List<Role> roles
-    ) {
-        this(
-                key,
-                null,
-                firstName,
-                lastName,
-                positions,
-                roles,
-                Collections.emptyList(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+    public @NonNull String fullName() {
+        StringBuilder stb = new StringBuilder();
+        if (title != null) {
+            stb.append(title).append(" ");
+        }
+        stb.append(firstName);
+        if (secondName != null) {
+            stb.append(" ").append(secondName);
+        }
+        stb.append(lastName);
+        return stb.toString();
     }
 
     public UserDetails withAddPosition(PositionKey position) {
@@ -62,7 +50,9 @@ public record UserDetails(
         return new UserDetails(
                 key,
                 authKey,
+                title,
                 firstName,
+                secondName,
                 lastName,
                 positions.stream().toList(),
                 roles,
@@ -84,7 +74,9 @@ public record UserDetails(
         return new UserDetails(
                 key,
                 authKey,
+                title,
                 firstName,
+                secondName,
                 lastName,
                 positions,
                 roles,

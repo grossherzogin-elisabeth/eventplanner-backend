@@ -10,5 +10,7 @@ public interface EventRepository {
 
     @NonNull Event create(@NonNull Event event);
 
+    @NonNull Event update(@NonNull Event event);
+
     void deleteAllByYear(int year);
 }

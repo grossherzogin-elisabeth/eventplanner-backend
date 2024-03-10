@@ -132,6 +132,7 @@ public class SecurityConfig {
     }
     private @NonNull Stream<Permission> getPermissionsByRole(@NonNull Role role) {
         return switch (role) {
+            case TECHNICAL_USER -> Stream.empty();
             case ADMIN -> Stream.of(Permission.values());
             case NONE -> Stream.of(
                     Permission.READ_OWN_USER_DETAILS,

@@ -7,6 +7,8 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 
+import static org.eventplanner.webapp.utils.ObjectUtils.mapNullable;
+
 public record UpdateEventRequest(
         @Nullable String name,
         @Nullable String state,
@@ -14,7 +16,8 @@ public record UpdateEventRequest(
         @Nullable String description,
         @Nullable String start,
         @Nullable String end,
-        @Nullable List<EventLocationRepresentation> locations
+        @Nullable List<LocationRepresentation> locations,
+        @Nullable List<SlotRepresentation> slots
 ) implements Serializable {
     public UpdateEventSpec toDomain() {
         return new UpdateEventSpec(
@@ -22,9 +25,10 @@ public record UpdateEventRequest(
                 state,
                 note,
                 description,
-                start != null ? Instant.parse(start) : null,
-                end != null ? Instant.parse(end) : null,
-                locations != null ? locations.stream().map(EventLocationRepresentation::toDomain).toList() : null
+                mapNullable(start, Instant::parse),
+                mapNullable(end, Instant::parse),
+                mapNullable(locations, LocationRepresentation::toDomain),
+                mapNullable(slots, SlotRepresentation::toDomain)
         );
     }
 }

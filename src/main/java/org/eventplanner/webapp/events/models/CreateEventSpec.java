@@ -11,7 +11,7 @@ public record CreateEventSpec(
         @Nullable String description,
         @Nullable Instant start,
         @Nullable Instant end,
-        @Nullable List<EventLocation> locations,
-        @Nullable List<EventSlot> slots
+        @Nullable List<Location> locations,
+        @Nullable List<Slot> slots
 ) {
 }

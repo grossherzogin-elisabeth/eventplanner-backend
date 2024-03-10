@@ -1,27 +1,43 @@
 package org.eventplanner.webapp.users.filesystem;
 
+import org.eventplanner.webapp.events.filesystem.EventJsonEntity;
 import org.eventplanner.webapp.users.UserRepository;
 import org.eventplanner.webapp.users.models.AuthKey;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.eventplanner.webapp.utils.FileSystemRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 // TODO encrypt user data
 @Repository
-public class UserFileSystemRepository extends FileSystemRepository<UserDetails,  UserJsonEntity> implements UserRepository {
+public class UserFileSystemRepository implements UserRepository {
 
-    public UserFileSystemRepository() {
-        super(UserJsonEntity.class, new File("/tmp/eventplanner/data/users"));
+    private final FileSystemRepository<UserDetailsJsonEntity> fs;
+
+    public UserFileSystemRepository(@Value("${custom.data-directory}") String dataDirectory) {
+        var directory = new File(dataDirectory + "/users");
+        this.fs = new FileSystemRepository<>(UserDetailsJsonEntity.class, directory);
     }
 
     @Override
-    public Optional<UserDetails> findByKey(UserKey key) {
-        return findByKey(key.value());
+    public @NonNull List<UserDetails> findAll() {
+        return fs.findAll().stream()
+                .map(UserDetailsJsonEntity::toDomain)
+                .sorted(Comparator.comparing(UserDetails::fullName))
+                .toList();
+    }
+
+    @Override
+    public @NonNull Optional<UserDetails> findByKey(@NonNull UserKey key) {
+        return fs.findByKey(key.value())
+                .map(UserDetailsJsonEntity::toDomain);
     }
 
     @Override
@@ -32,17 +48,13 @@ public class UserFileSystemRepository extends FileSystemRepository<UserDetails, 
     }
 
     @Override
-    public String getKey(UserDetails domain) {
-        return domain.key().value();
+    public @NonNull UserDetails create(@NonNull UserDetails user) {
+        return fs.create(user.key().value(), UserDetailsJsonEntity.fromDomain(user))
+                .toDomain();
     }
 
     @Override
-    public UserJsonEntity mapToEntity(UserDetails domain) {
-        return UserJsonEntity.fromDomain(domain);
-    }
-
-    @Override
-    public UserDetails mapToDomain(UserJsonEntity entity) {
-        return entity.toDomain();
+    public void deleteAll() {
+        fs.deleteAll();
     }
 }

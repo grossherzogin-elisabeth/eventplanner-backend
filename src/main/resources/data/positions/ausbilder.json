@@ -1,0 +1,7 @@
+{
+    "key": "ausbilder",
+    "name": "Ausbilder:in",
+    "substitutes": ["deckshand", "leichtmatrose", "matrose"],
+    "color": "#f97316",
+    "prio": 4
+}

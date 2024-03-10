@@ -81,7 +81,7 @@ public class EventController {
         return ResponseEntity.ok(EventRepresentation.fromDomain(event));
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/by-key/{eventKey}/team")
+    @RequestMapping(method = RequestMethod.PUT, path = "/by-key/{eventKey}/registrations")
     public ResponseEntity<EventRepresentation> updateEventTeam(@PathVariable String eventKey, @RequestBody UpdateEventTeamRequest spec) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.updateEventTeam(
@@ -91,7 +91,7 @@ public class EventController {
         return ResponseEntity.ok(EventRepresentation.fromDomain(event));
     }
 
-    @RequestMapping(method = RequestMethod.DELETE, path = "/by-key/{eventKey}/team/{userKey}")
+    @RequestMapping(method = RequestMethod.DELETE, path = "/by-key/{eventKey}/registrations/{userKey}")
     public ResponseEntity<EventRepresentation> removeUserFromEventTeam(@PathVariable String eventKey, @PathVariable String userKey) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.removeUserFromTeam(
