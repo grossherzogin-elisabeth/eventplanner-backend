@@ -8,8 +8,6 @@ import org.eventplanner.webapp.events.models.Slot;
 import org.eventplanner.webapp.events.models.EventState;
 import org.eventplanner.webapp.positions.models.PositionKey;
 import org.eventplanner.webapp.users.models.UserDetails;
-import org.eventplanner.webapp.utils.ExcelUtils;
-import org.eventplanner.webapp.utils.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -17,13 +15,14 @@ import org.springframework.lang.NonNull;
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.eventplanner.webapp.utils.ObjectUtils.mapNullable;
 
@@ -46,15 +45,18 @@ public class EventExcelImporter {
             log.warn("Userlist is empty, cannot resolve any username!");
         }
         var events = new ArrayList<Event>();
-        var eventErrors = new HashMap<String, List<String>>();
+        var userNotFoundErrors = new ArrayList<String>();
+        var wrongPositionErrors = new ArrayList<String>();
         for (int i = 1; i < data.length; i++) {
-            var errors = new ArrayList<String>();
             var raw = data[i];
-            var eventName = raw[1].trim()
-                    .replaceAll("\n", " ")
-                    .replaceAll("  ", "");
             var start = parseExcelDate(raw[2], year, 0);
             var end = parseExcelDate(raw[2], year, 1);
+            var eventName = removeDuplicateWhitespaces(raw[1]);
+            if (eventName.startsWith("SR")) {
+                eventName = eventName.replace("SR", "Sommerreise");
+            }
+            var date = DateTimeFormatter.ISO_LOCAL_DATE.format(start.atZone(ZoneId.of("Europe/Berlin")));
+            var logId = eventName + ", " + date + ": ";
 
             var slots = generateDefaultEventSlots(eventName);
             var waitingListReached = false;
@@ -72,13 +74,12 @@ public class EventExcelImporter {
                 }
                 var user = findMatchingUser(name, knownUsers).orElse(null);
                 if (user == null) {
-                    errors.add("Failed to find user '" + name + "'");
+                    userNotFoundErrors.add(logId + "'" + name + "' konnte nicht in der Kaderliste gefunden werden.");
                 }
                 var userKey = mapNullable(user, UserDetails::key);
                 var positionKey = mapPosition(data[0][r]);
                 if (user != null && !user.positions().contains(positionKey)) {
-                    errors.add("User " + user.fullName() + " does not have position '" + positionKey.value() + "'! " +
-                            "Changing position to '" + user.positions().getFirst().value() + "'");
+                    wrongPositionErrors.add(logId + "'" + name + "' hat nicht die Position '" + positionKey.value() + "'.");
                     positionKey = user.positions().getFirst();
                 }
                 var registration = userKey != null
@@ -94,7 +95,7 @@ public class EventExcelImporter {
                 registrations.add(registration);
             }
             var event = new Event(
-                    new EventKey(String.valueOf(i)),
+                    new EventKey(UUID.randomUUID().toString()),
                     eventName,
                     EventState.PLANNED,
                     raw[3],
@@ -106,9 +107,22 @@ public class EventExcelImporter {
                     registrations
             );
             events.add(event);
-            eventErrors.put(event.name(), errors);
         }
         return events;
+    }
+
+    private static String removeDuplicateWhitespaces(String in) {
+        String result = in.trim()
+                .replaceAll("\t", " ")
+                .replaceAll("\n", " ")
+                .replaceAll("\r", " ");
+        while (true) {
+            String temp = result.replaceAll("\s\s", " ");
+            if (temp.length() == result.length()) {
+                return result;
+            }
+            result = temp;
+        }
     }
 
     private static Optional<UserDetails> findMatchingUser(String name, List<UserDetails> allUsers) {
@@ -116,68 +130,100 @@ public class EventExcelImporter {
             return Optional.empty();
         }
         try {
-            var normalizedName = name
-                    .trim()
-                    .replace("mit Ü", "") // used as flag
-                    .replace("u. V.", "") // used as flag
-                    .replace("u.V.", "") // used as flag
-                    .replace("?", "") // used as flag
-                    .replace(" fix", "") // used as flag
-                    .replace(",", " ") // there are some names without whitespace after the ','
-                    .replace("  ", " ") // remove duplicate whitespaces
-                    .replaceAll("\\(.*\\)", "") // remove everything in brackets e.g. (this)
-                    .replaceAll("[^a-zA-ZöäüÖÄÜß\\-. ]", ""); // keep only a-z characters and a few symbols
-            final var nameParts = normalizedName.split(" ");
-            nameParts[0] = resolveAbbreviations(nameParts[0]).trim();
-            nameParts[1] = resolveAbbreviations(nameParts[1]).trim();
-            if (nameParts.length > 2) {
-                if (name.contains(",")) {
-                    nameParts[1] = nameParts[1] + " " + nameParts[2];
-                } else {
-                    nameParts[0] = nameParts[0] + " " + nameParts[1];
-                    nameParts[1] = nameParts[2];
-                }
-            }
+            var normalizedName = normalizeName(name);
+
+            allUsers.stream()
+                    .map(UserDetails::fullName)
+                    .map(EventExcelImporter::normalizeName)
+                    .toList();
+
             // search for exact match
             var exactMatch = allUsers.stream()
-                    .filter(user -> (user.lastName().equalsIgnoreCase(nameParts[0]) && user.firstName().equalsIgnoreCase(nameParts[1]))
-                            || (user.lastName().equalsIgnoreCase(nameParts[1]) && user.firstName().equalsIgnoreCase(nameParts[0])))
+                    .filter(user -> {
+                        var usersName = normalizeName(user.fullName());
+                        return normalizedName.equalsIgnoreCase(usersName);
+                    })
                     .findFirst();
             if (exactMatch.isPresent()) {
                 return exactMatch;
             }
 
-            // search for exact match in last name and starts with in first name
-            var lastNameMatch = allUsers.stream()
-                    .filter(user -> (user.lastName().equalsIgnoreCase(nameParts[0]) && user.firstName().startsWith(nameParts[1]))
-                            || (user.lastName().equalsIgnoreCase(nameParts[1]) && user.firstName().startsWith(nameParts[0])))
+            // search for exact reversed match
+            var reversedMatch = allUsers.stream()
+                    .filter(user -> {
+                        var usersName = normalizeName(user.fullName(), true);
+                        return normalizedName.equalsIgnoreCase(usersName);
+                    })
                     .findFirst();
-            if (lastNameMatch.isPresent()) {
-                var user = lastNameMatch.get();
-                log.debug("Found last name match for name " + name + " on " + user.firstName() + " " + user.lastName());
-                return lastNameMatch;
+            if (reversedMatch.isPresent()) {
+                // log.debug("Found reversed exact match for " + name + " on " + reversedMatch.get().fullName());
+                return reversedMatch;
             }
-//            log.warn("Could not find a matching user for " + name);
+
+            // search parts contained match
+            var allPartsContainedMatch = allUsers.stream()
+                    .filter(user -> {
+                        var usersName = normalizeName(user.fullName());
+                        return Arrays.stream(normalizedName.split(" "))
+                                .allMatch(usersName::contains);
+                    })
+                    .findFirst();
+            if (allPartsContainedMatch.isPresent()) {
+                // log.debug("Found all parts contained match for " + name + " on " + allPartsContainedMatch.get().fullName());
+                return allPartsContainedMatch;
+            }
+
+            // search reverse parts contained match
+            var reverseAllPartsContainedMatch = allUsers.stream()
+                    .filter(user -> Arrays.stream(normalizeName(user.fullName()).split(" ")).allMatch(normalizedName::contains))
+                    .findFirst();
+            if (reverseAllPartsContainedMatch.isPresent()) {
+                // log.debug("Found reverse all parts contained match for " + name + " on " + reverseAllPartsContainedMatch.get().fullName());
+                return reverseAllPartsContainedMatch;
+            }
+            log.warn("Could not find a matching user for " + name);
         } catch (Exception e) {
             log.error("Failed to find a matching user for " + name, e);
         }
         return Optional.empty();
     }
 
-    private static @NonNull String resolveAbbreviations(@NonNull String in) {
-        if (in.equals("HaWe")) {
-            return "Hans-Werner";
+    private static @NonNull String normalizeName(@NonNull String fullName) {
+        return normalizeName(fullName, false);
+    }
+
+    private static @NonNull String normalizeName(@NonNull String fullName, boolean reverse) {
+        var normalizedName = fullName.trim()
+                .replace("HaWe", "Hans-Werner")
+                .replace("H.U.", "Hans-Ulrich")
+                .replace("H.-U.", "Hans-Ulrich")
+                .replace("Rudi", "Rudolf")
+                .replace("K.L.", "Karl-Ludwig")
+                .replace("K.-L.", "Karl-Ludwig")
+                .replace("mit Ü", "") // used as flag
+                .replace("u. V.", "") // used as flag
+                .replace("u.V.", "") // used as flag
+                .replace(" ?", "") // used as flag
+                .replace(" fix", "") // used as flag
+                .replace(",", ", ") // there are some names without whitespace after the ','
+                .replace("-", " ") // sometimes the - is missing
+                .replace("ß", "ss")
+                .replaceAll("\\(.*\\)", "") // remove everything in brackets e.g. (this)
+                .replaceAll("[^a-zA-ZöäüÖÄÜ., ]", ""); // keep only a-z characters and a few symbols
+
+        if (normalizedName.contains(",")) {
+            var parts = normalizedName.split(",");
+            normalizedName = parts[1] + " " + parts[0];
         }
-        if (in.equals("H.U.")) {
-            return "Hans-Ulrich";
+
+        var parts = Arrays.stream(normalizedName.split(" "))
+                .map(String::trim)
+                .filter(part -> !part.isBlank())
+                .toList();
+        if (reverse) {
+            return String.join(" ", parts.reversed());
         }
-        if (in.equals("Rudi")) {
-            return "Rudolf";
-        }
-        if (in.equals("K.-L.")) {
-            return "Karl-Ludwig";
-        }
-        return in;
+        return String.join(" ", parts);
     }
 
     private static Instant parseExcelDate(String value, int year, int index) {
@@ -212,7 +258,7 @@ public class EventExcelImporter {
             case "NOA" -> DefaultPositions.POSITION_NOA;
             case "1. Maschinist", "2. Maschinist", "3. Maschinist (Ausb.)" -> DefaultPositions.POSITION_MASCHINIST;
             case "Koch" -> DefaultPositions.POSITION_KOCH;
-            case "Ausbilder" -> DefaultPositions.POSITION_AUSBILDER;
+            case "Ausbilder" -> DefaultPositions.POSITION_MATROSE;
             case "Matrose" -> DefaultPositions.POSITION_MATROSE;
             case "Leichtmatrose" -> DefaultPositions.POSITION_LEICHTMATROSE;
             case "Decksmann / -frau" -> DefaultPositions.POSITION_DECKSHAND;
@@ -292,25 +338,25 @@ public class EventExcelImporter {
         slots.add(Slot.of(DefaultPositions.POSITION_KOCH).withRequired());
         slots.add(Slot.of(DefaultPositions.POSITION_KOCH).withRequired());
         slots.add(Slot.of(DefaultPositions.POSITION_KOCH));
-        slots.add(Slot.of(DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER).withRequired());
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER));
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER));
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER));
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER));
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER));
-        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER));
+        slots.add(Slot.of(DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE).withRequired());
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE));
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE));
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE));
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE));
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE));
+        slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE));
         if (eventName.equals("Ausbildungsfahrt Crew")) {
             for (int i = 0; i < 30; i++) {
-                slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE, DefaultPositions.POSITION_AUSBILDER));
+                slots.add(Slot.of(DefaultPositions.POSITION_DECKSHAND, DefaultPositions.POSITION_MATROSE, DefaultPositions.POSITION_LEICHTMATROSE));
             }
         }
         slots.add(Slot.of(DefaultPositions.POSITION_BACKSCHAFT));

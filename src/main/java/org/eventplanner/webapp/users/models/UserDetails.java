@@ -36,9 +36,9 @@ public record UserDetails(
         if (title != null) {
             stb.append(title).append(" ");
         }
-        stb.append(firstName);
+        stb.append(firstName).append(" ");
         if (secondName != null) {
-            stb.append(" ").append(secondName);
+            stb.append(secondName).append(" ");
         }
         stb.append(lastName);
         return stb.toString();

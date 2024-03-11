@@ -8,7 +8,6 @@ public class DefaultPositions {
     protected static final PositionKey POSITION_NOA = new PositionKey("noa");
     protected static final PositionKey POSITION_MASCHINIST = new PositionKey("maschinist");
     protected static final PositionKey POSITION_KOCH = new PositionKey("koch");
-    protected static final PositionKey POSITION_AUSBILDER = new PositionKey("ausbilder");
     protected static final PositionKey POSITION_MATROSE = new PositionKey("matrose");
     protected static final PositionKey POSITION_LEICHTMATROSE = new PositionKey("leichtmatrose");
     protected static final PositionKey POSITION_DECKSHAND = new PositionKey("deckshand");

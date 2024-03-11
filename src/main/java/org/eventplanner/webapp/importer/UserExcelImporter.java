@@ -2,12 +2,9 @@ package org.eventplanner.webapp.importer;
 
 import org.eventplanner.webapp.config.Role;
 import org.eventplanner.webapp.positions.models.PositionKey;
-import org.eventplanner.webapp.qualifications.models.QualificationKey;
 import org.eventplanner.webapp.users.models.Address;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.eventplanner.webapp.users.models.UserKey;
-import org.eventplanner.webapp.users.models.UserQualification;
-import org.eventplanner.webapp.utils.ExcelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -15,10 +12,6 @@ import org.springframework.lang.Nullable;
 
 import java.io.InputStream;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -75,6 +68,7 @@ public class UserExcelImporter {
             if (firstName.contains(" ")) {
                 var parts = firstName.split(" ");
                 firstName = parts[0];
+                secondName = "";
                 for (int i = 1; i < parts.length; i++) {
                     secondName = (secondName + " " + parts[i]).trim();
                 }
@@ -126,6 +120,9 @@ public class UserExcelImporter {
                 );
             }
             user = user.withAddPosition(position);
+            if (position.equals(DefaultPositions.POSITION_STM)) {
+                user = user.withAddPosition(DefaultPositions.POSITION_MATROSE);
+            }
 //            var fitnessForSeaService = data[COL_FITNESS_FOR_SEA_SERVICE_EXPIRATION_DATE][r].trim();;
 //            if (!fitnessForSeaService.isBlank() && !fitnessForSeaService.equals("-")) {
 //                user.withAddQualification(new QualificationKey())
@@ -140,32 +137,52 @@ public class UserExcelImporter {
     }
 
     private static @NonNull PositionKey mapPosition(@NonNull String value) {
-        return switch (value.toLowerCase().trim()) {
-            case "cook" -> DefaultPositions.POSITION_KOCH;
-            case "mate" -> DefaultPositions.POSITION_STM;
+        var positionNormalized = value.toLowerCase()
+                .replaceAll("[^a-zöäüß]", ""); // keep only a-z characters and a few symbols
+        return switch (positionNormalized) {
             case "master" -> DefaultPositions.POSITION_KAPITAEN;
-            case "bosun" -> DefaultPositions.POSITION_AUSBILDER;
+            case "kapitän" -> DefaultPositions.POSITION_KAPITAEN;
+
+            case "mate" -> DefaultPositions.POSITION_STM;
+            case "steuermann" -> DefaultPositions.POSITION_STM;
+
+            case "noa" -> DefaultPositions.POSITION_NOA;
+            case "moa" -> DefaultPositions.POSITION_NOA;
+            case "cadet" -> DefaultPositions.POSITION_NOA;
+
+            case "ab" -> DefaultPositions.POSITION_MATROSE;
+            case "matrose" -> DefaultPositions.POSITION_MATROSE;
+            case "m" -> DefaultPositions.POSITION_MATROSE;
+            case "bosun" -> DefaultPositions.POSITION_MATROSE;
+            case "abtrainer" -> DefaultPositions.POSITION_MATROSE;
+            case "cadetab" -> DefaultPositions.POSITION_NOA;
+
+            case "os" -> DefaultPositions.POSITION_LEICHTMATROSE;
+            case "leichtmatrose" -> DefaultPositions.POSITION_LEICHTMATROSE;
+            case "lm" -> DefaultPositions.POSITION_LEICHTMATROSE;
+            case "oslm" -> DefaultPositions.POSITION_LEICHTMATROSE;
+
+            case "engineer" -> DefaultPositions.POSITION_MASCHINIST;
+            case "maschinist" -> DefaultPositions.POSITION_MASCHINIST;
             case "motorman" -> DefaultPositions.POSITION_MASCHINIST;
             case "motormann" -> DefaultPositions.POSITION_MASCHINIST;
+
+            case "cook" -> DefaultPositions.POSITION_KOCH;
+            case "koch" -> DefaultPositions.POSITION_KOCH;
+
             case "steward" -> DefaultPositions.POSITION_BACKSCHAFT;
-            case "noa" -> DefaultPositions.POSITION_NOA;
-            case "lm" -> DefaultPositions.POSITION_LEICHTMATROSE;
-            case "engineer" -> DefaultPositions.POSITION_MASCHINIST;
-            case "ab/trainer" -> DefaultPositions.POSITION_AUSBILDER;
-            case "ab" -> DefaultPositions.POSITION_MATROSE;
-            case "os" -> DefaultPositions.POSITION_DECKSHAND;
-            case "os (lm) ?" -> DefaultPositions.POSITION_LEICHTMATROSE;
-            case "os (lm)" -> DefaultPositions.POSITION_LEICHTMATROSE;
-            case "os (trainee)" -> DefaultPositions.POSITION_DECKSHAND;
-            case "os (tainee)" -> DefaultPositions.POSITION_DECKSHAND;
-            case "os trainee)" -> DefaultPositions.POSITION_DECKSHAND;
-            case "os(trainee)" -> DefaultPositions.POSITION_DECKSHAND;
-            case "child" -> DefaultPositions.POSITION_DECKSHAND;
-            case "moa" -> DefaultPositions.POSITION_MASCHINIST;
+
             case "deckshand" -> DefaultPositions.POSITION_DECKSHAND;
-            case "purser" -> DefaultPositions.POSITION_DECKSHAND; // TODO ?
-            case "cadet" -> DefaultPositions.POSITION_DECKSHAND; // TODO ?
+            case "ostrainee" -> DefaultPositions.POSITION_DECKSHAND;
+            case "ostainee" -> DefaultPositions.POSITION_DECKSHAND;
+
+            // TODO add new position "Mitreisender"
+            case "mitreisender" -> DefaultPositions.POSITION_DECKSHAND;
+            case "supernumerary" -> DefaultPositions.POSITION_DECKSHAND;
+            case "child" -> DefaultPositions.POSITION_DECKSHAND;
+            case "purser" -> DefaultPositions.POSITION_DECKSHAND;
             case "" -> DefaultPositions.POSITION_DECKSHAND;
+
             default -> throw new IllegalArgumentException("Unknown position: " + value);
         };
     }

@@ -1,4 +1,4 @@
-package org.eventplanner.webapp.utils;
+package org.eventplanner.webapp.importer;
 
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;

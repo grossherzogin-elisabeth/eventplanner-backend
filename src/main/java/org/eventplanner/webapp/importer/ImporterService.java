@@ -42,15 +42,15 @@ public class ImporterService {
             }
         }
 
-        var events2023 = new File(dataDirectory + "/import/events-2023.xlsx");
-        if (events2023.exists()) {
-            log.info("Importing events 2023 from xlsx");
-            try (var in = new FileInputStream(events2023)) {
-                importEvents(SignedInUser.technicalUser(Permission.WRITE_EVENTS), 2023, in);
-            } catch (Exception e) {
-                log.error("Failed to import events on startup", e);
-            }
-        }
+//        var events2023 = new File(dataDirectory + "/import/events-2023.xlsx");
+//        if (events2023.exists()) {
+//            log.info("Importing events 2023 from xlsx");
+//            try (var in = new FileInputStream(events2023)) {
+//                importEvents(SignedInUser.technicalUser(Permission.WRITE_EVENTS), 2023, in);
+//            } catch (Exception e) {
+//                log.error("Failed to import events on startup", e);
+//            }
+//        }
 
         var events2024 = new File(dataDirectory + "/import/events-2024.xlsx");
         if (events2024.exists()) {
