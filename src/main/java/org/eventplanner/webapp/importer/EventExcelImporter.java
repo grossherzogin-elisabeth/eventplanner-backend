@@ -6,10 +6,12 @@ import org.eventplanner.webapp.events.models.Location;
 import org.eventplanner.webapp.events.models.Registration;
 import org.eventplanner.webapp.events.models.Slot;
 import org.eventplanner.webapp.events.models.EventState;
+import org.eventplanner.webapp.importer.models.ImportError;
 import org.eventplanner.webapp.positions.models.PositionKey;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Import;
 import org.springframework.lang.NonNull;
 
 import java.io.InputStream;
@@ -31,33 +33,33 @@ public class EventExcelImporter {
     private static final Logger log = LoggerFactory.getLogger(EventExcelImporter.class);
 
     public static @NonNull List<Event> readFromInputStream(@NonNull InputStream in, int year, List<UserDetails> knownUsers) {
+        return readFromInputStream(in, year, knownUsers, new ArrayList<>());
+    }
+
+    public static @NonNull List<Event> readFromInputStream(@NonNull InputStream in, int year, List<UserDetails> knownUsers, List<ImportError> errors) {
         try {
             var data = ExcelUtils.readExcelFile(in);
-            return parseEvents(data, year, knownUsers);
+            return parseEvents(data, year, knownUsers, errors);
         } catch (Exception e) {
             log.error("Failed to read excel file", e);
         }
         return Collections.emptyList();
     }
 
-    private static List<Event> parseEvents(String[][] data, int year, List<UserDetails> knownUsers) {
+    private static List<Event> parseEvents(String[][] data, int year, List<UserDetails> knownUsers, List<ImportError> errors) {
         if (knownUsers.isEmpty()) {
             log.warn("Userlist is empty, cannot resolve any username!");
         }
         var events = new ArrayList<Event>();
-        var userNotFoundErrors = new ArrayList<String>();
-        var wrongPositionErrors = new ArrayList<String>();
         for (int i = 1; i < data.length; i++) {
             var raw = data[i];
+            var eventKey = new EventKey(UUID.randomUUID().toString());
             var start = parseExcelDate(raw[2], year, 0);
             var end = parseExcelDate(raw[2], year, 1);
             var eventName = removeDuplicateWhitespaces(raw[1]);
             if (eventName.startsWith("SR")) {
                 eventName = eventName.replace("SR", "Sommerreise");
             }
-            var date = DateTimeFormatter.ISO_LOCAL_DATE.format(start.atZone(ZoneId.of("Europe/Berlin")));
-            var logId = eventName + ", " + date + ": ";
-
             var slots = generateDefaultEventSlots(eventName);
             var waitingListReached = false;
             var registrations = new ArrayList<Registration>();
@@ -74,12 +76,14 @@ public class EventExcelImporter {
                 }
                 var user = findMatchingUser(name, knownUsers).orElse(null);
                 if (user == null) {
-                    userNotFoundErrors.add(logId + "'" + name + "' konnte nicht in der Kaderliste gefunden werden.");
+                    var message = "'" + name + "' konnte nicht in der Kaderliste gefunden werden.";
+                    errors.add(new ImportError(eventKey, eventName, start, end, message));
                 }
                 var userKey = mapNullable(user, UserDetails::key);
                 var positionKey = mapPosition(data[0][r]);
                 if (user != null && !user.positions().contains(positionKey)) {
-                    wrongPositionErrors.add(logId + "'" + name + "' hat nicht die Position '" + positionKey.value() + "'.");
+                    var message = "'" + name + "' hat nicht die Position '" + positionKey.value() + "'.";
+                    errors.add(new ImportError(eventKey, eventName, start, end, message));
                     positionKey = user.positions().getFirst();
                 }
                 var registration = userKey != null
@@ -95,7 +99,7 @@ public class EventExcelImporter {
                 registrations.add(registration);
             }
             var event = new Event(
-                    new EventKey(UUID.randomUUID().toString()),
+                    eventKey,
                     eventName,
                     EventState.PLANNED,
                     raw[3],

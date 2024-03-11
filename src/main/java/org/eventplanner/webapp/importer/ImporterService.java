@@ -4,6 +4,7 @@ import org.eventplanner.webapp.config.Permission;
 import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.events.EventRepository;
 import org.eventplanner.webapp.events.models.Event;
+import org.eventplanner.webapp.importer.models.ImportError;
 import org.eventplanner.webapp.users.UserRepository;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.slf4j.Logger;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ImporterService {
@@ -52,25 +55,27 @@ public class ImporterService {
 //            }
 //        }
 
-        var events2024 = new File(dataDirectory + "/import/events-2024.xlsx");
-        if (events2024.exists()) {
-            log.info("Importing events 2024 from xlsx");
-            try (var in = new FileInputStream(events2024)) {
-                importEvents(SignedInUser.technicalUser(Permission.WRITE_EVENTS), 2024, in);
-            } catch (Exception e) {
-                log.error("Failed to import events on startup", e);
-            }
-        }
+//        var events2024 = new File(dataDirectory + "/import/events-2024.xlsx");
+//        if (events2024.exists()) {
+//            log.info("Importing events 2024 from xlsx");
+//            try (var in = new FileInputStream(events2024)) {
+//                importEvents(SignedInUser.technicalUser(Permission.WRITE_EVENTS), 2024, in);
+//            } catch (Exception e) {
+//                log.error("Failed to import events on startup", e);
+//            }
+//        }
     }
 
-    public void importEvents(@NonNull SignedInUser signedInUser, int year, InputStream stream) {
+    public List<ImportError> importEvents(@NonNull SignedInUser signedInUser, int year, InputStream stream) {
         signedInUser.assertHasPermission(Permission.WRITE_EVENTS);
         var users =  userRepository.findAll();
-        var events = EventExcelImporter.readFromInputStream(stream, year, users);
+        var errors = new ArrayList<ImportError>();
+        var events = EventExcelImporter.readFromInputStream(stream, year, users, errors);
         eventRepository.deleteAllByYear(year);
         for (Event event : events) {
             eventRepository.create(event);
         }
+        return errors;
     }
 
     public void importUsers(@NonNull SignedInUser signedInUser, InputStream stream) {
