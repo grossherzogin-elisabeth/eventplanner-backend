@@ -27,9 +27,14 @@ public class SecurityConfig {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final String loginSuccessUrl;
+    private final boolean everyoneIsAdmin;
 
-    public SecurityConfig(@Value("${custom.login-success-url}") String loginSuccessUrl) {
+    public SecurityConfig(
+            @Value("${custom.login-success-url}") String loginSuccessUrl,
+            @Value("${custom.everyone-is-admin}") String everyoneIsAdmin
+    ) {
         this.loginSuccessUrl = loginSuccessUrl;
+        this.everyoneIsAdmin = "true".equals(everyoneIsAdmin);
     }
 
     @Bean
@@ -85,8 +90,12 @@ public class SecurityConfig {
         // var email = oidcUserAuthority.getIdToken().getClaimAsString("email");
         // TODO find application roles for sub or email
         var email = oidcUserAuthority.getIdToken().getEmail();
-        if ("admin@grossherzogin-elisabeth.de".equals(email)
-            || "malte.schwitters@outlook.de".equals(email)) {
+        if (everyoneIsAdmin) {
+            resultStream.add(Role.ADMIN.value());
+            getPermissionsByRole(Role.ADMIN)
+                    .map(Permission::value)
+                    .forEach(resultStream::add);
+        } else if ("admin@grossherzogin-elisabeth.de".equals(email)) {
             resultStream.add(Role.ADMIN.value());
             getPermissionsByRole(Role.ADMIN)
                     .map(Permission::value)

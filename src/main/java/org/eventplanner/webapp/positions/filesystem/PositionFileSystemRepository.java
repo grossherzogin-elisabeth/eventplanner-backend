@@ -25,8 +25,10 @@ public class PositionFileSystemRepository implements PositionRepository {
         if (!dir.exists()) {
             try {
                 var resource = resourceLoader.getResource("classpath:data/positions");
-                var sourceDir = resource.getFile();
-                FileUtils.copyDirectory(sourceDir, dir);
+                if (resource.exists()) {
+                    var sourceDir = resource.getFile();
+                    FileUtils.copyDirectory(sourceDir, dir);
+                }
             } catch (IOException e) {
                 log.error("Failed to copy bundled positions into data directory", e);
             }
