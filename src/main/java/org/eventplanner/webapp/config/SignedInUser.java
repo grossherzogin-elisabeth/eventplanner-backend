@@ -78,7 +78,7 @@ public record SignedInUser(
                 .toList();
         if (authentication.getPrincipal() instanceof OidcUser oidcUser) {
             return new SignedInUser(
-                    new UserKey("e6ff20e64a1d15ae"), // TODO
+                    new UserKey("todo"), // TODO
                     new AuthKey(oidcUser.getSubject()),
                     roles,
                     permissions,
