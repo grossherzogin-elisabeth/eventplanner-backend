@@ -1,14 +1,10 @@
 package org.eventplanner.webapp.events.rest;
 
 import org.eventplanner.webapp.events.models.Event;
-import org.eventplanner.webapp.positions.models.PositionKey;
-import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.lang.NonNull;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public record EventRepresentation(
         @NonNull String key,

@@ -6,7 +6,6 @@ import org.eventplanner.webapp.events.models.CreateEventSpec;
 import org.eventplanner.webapp.events.models.Event;
 import org.eventplanner.webapp.events.models.EventKey;
 import org.eventplanner.webapp.events.models.Registration;
-import org.eventplanner.webapp.events.models.Slot;
 import org.eventplanner.webapp.events.models.UpdateEventSpec;
 import org.eventplanner.webapp.exceptions.NotImplementedException;
 import org.eventplanner.webapp.positions.models.PositionKey;

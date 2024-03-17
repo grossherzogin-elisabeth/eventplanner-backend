@@ -3,17 +3,13 @@ package org.eventplanner.webapp.events.filesystem;
 import org.eventplanner.webapp.events.models.Event;
 import org.eventplanner.webapp.events.models.EventKey;
 import org.eventplanner.webapp.events.models.EventState;
-import org.eventplanner.webapp.positions.models.PositionKey;
-import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.eventplanner.webapp.utils.ObjectUtils.mapNullable;
 

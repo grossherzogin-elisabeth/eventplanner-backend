@@ -6,22 +6,17 @@ import org.eventplanner.webapp.exceptions.NotImplementedException;
 import org.eventplanner.webapp.users.models.AuthKey;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.eventplanner.webapp.users.models.UserKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static java.lang.String.format;
 
 @Service
 public class UserService {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final UserRepository userRepository;
 
     public UserService(@Autowired UserRepository userRepository) {

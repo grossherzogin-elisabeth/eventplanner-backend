@@ -15,7 +15,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,7 +77,7 @@ public record SignedInUser(
                 .toList();
         if (authentication.getPrincipal() instanceof OidcUser oidcUser) {
             return new SignedInUser(
-                    new UserKey("todo"), // TODO
+                    new UserKey("todo"), // TODO get actual user key
                     new AuthKey(oidcUser.getSubject()),
                     roles,
                     permissions,

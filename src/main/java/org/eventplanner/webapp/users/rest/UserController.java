@@ -1,13 +1,11 @@
 package org.eventplanner.webapp.users.rest;
 
-import org.eventplanner.webapp.config.Role;
 import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.users.UserService;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;

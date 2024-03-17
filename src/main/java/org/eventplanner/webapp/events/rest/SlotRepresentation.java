@@ -3,7 +3,6 @@ package org.eventplanner.webapp.events.rest;
 import org.eventplanner.webapp.events.models.Slot;
 import org.eventplanner.webapp.events.models.SlotKey;
 import org.eventplanner.webapp.positions.models.PositionKey;
-import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 

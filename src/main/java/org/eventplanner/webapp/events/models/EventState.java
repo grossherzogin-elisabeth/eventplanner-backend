@@ -1,6 +1,5 @@
 package org.eventplanner.webapp.events.models;
 
-import org.eventplanner.webapp.config.Permission;
 import org.springframework.lang.Nullable;
 
 import java.util.Arrays;

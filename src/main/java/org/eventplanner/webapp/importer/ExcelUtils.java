@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 
 public class ExcelUtils {
 
@@ -40,6 +39,7 @@ public class ExcelUtils {
                 cells[c][r] = getCellValueAsString(sheet, r, c);
             }
         }
+        workbook.close();
         return cells;
     }
 

@@ -11,13 +11,11 @@ import org.eventplanner.webapp.positions.models.PositionKey;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Import;
 import org.springframework.lang.NonNull;
 
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;

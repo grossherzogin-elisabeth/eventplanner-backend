@@ -1,7 +1,6 @@
 package org.eventplanner.webapp.positions.rest;
 
 import org.eventplanner.webapp.config.SignedInUser;
-import org.eventplanner.webapp.events.rest.EventRepresentation;
 import org.eventplanner.webapp.positions.PositionService;
 import org.eventplanner.webapp.positions.models.Position;
 import org.eventplanner.webapp.positions.models.PositionKey;
