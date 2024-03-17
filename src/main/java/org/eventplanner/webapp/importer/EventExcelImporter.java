@@ -16,6 +16,7 @@ import org.springframework.lang.NonNull;
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -228,11 +229,11 @@ public class EventExcelImporter {
         return String.join(" ", parts);
     }
 
-    private static Instant parseExcelDate(String value, int year, int index) {
+    private static ZonedDateTime parseExcelDate(String value, int year, int index) {
         try {
-            var instant = Instant.parse(value);
-            if (instant.atZone(ZoneId.of("Europe/Berlin")).getYear() == year) {
-                return instant;
+            var date = Instant.parse(value).atZone(ZoneId.of("Europe/Berlin"));
+            if (date.getYear() == year) {
+                return date;
             }
         } catch (DateTimeParseException e) {
             // expected
@@ -250,7 +251,7 @@ public class EventExcelImporter {
         format = format.replace("yyyy", String.valueOf(year));
         format = format.replace("mm", dayMonth.get(1));
         format = format.replace("dd", dayMonth.get(0));
-        return Instant.parse(format);
+        return ZonedDateTime.parse(format);
     }
 
     private static PositionKey mapPosition(String value) {

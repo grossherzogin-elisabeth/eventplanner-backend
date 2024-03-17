@@ -6,7 +6,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 public record UserQualificationJsonEntity(
         @NonNull String qualificationKey,
@@ -22,6 +22,6 @@ public record UserQualificationJsonEntity(
     public @NonNull UserQualification toDomain() {
         return new UserQualification(
                 new QualificationKey(qualificationKey),
-                expiresAt != null ? Instant.parse(expiresAt) : null);
+                expiresAt != null ? ZonedDateTime.parse(expiresAt) : null);
     }
 }

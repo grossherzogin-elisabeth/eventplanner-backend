@@ -6,7 +6,7 @@ import org.eventplanner.webapp.qualifications.models.QualificationKey;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +25,7 @@ public record UserDetails(
         @Nullable String email,
         @Nullable String phone,
         @Nullable String mobile,
-        @Nullable Instant dateOfBirth,
+        @Nullable ZonedDateTime dateOfBirth,
         @Nullable String placeOfBirth,
         @Nullable String passNr,
         @Nullable String comment
@@ -68,7 +68,7 @@ public record UserDetails(
         );
     }
 
-    public UserDetails withAddQualification(QualificationKey qualification, Instant expires) {
+    public UserDetails withAddQualification(QualificationKey qualification, ZonedDateTime expires) {
         var qualifications = new ArrayList<>(qualifications());
         qualifications.add(new UserQualification(qualification, expires));
         return new UserDetails(

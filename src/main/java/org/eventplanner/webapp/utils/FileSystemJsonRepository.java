@@ -19,7 +19,7 @@ import java.util.Optional;
 
 public class FileSystemJsonRepository<E> {
 
-    private final Gson gson = new GsonBuilder().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final String directory;
     private final Class<E> entityClass;

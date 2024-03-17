@@ -1,5 +1,6 @@
 package org.eventplanner.webapp.importer;
 
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -7,6 +8,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Optional;
 
 public class ExcelUtils {
 
@@ -52,12 +56,6 @@ public class ExcelUtils {
         if (cell == null) {
             return "";
         }
-        try {
-            var date = cell.getDateCellValue();
-            return date.toInstant().toString();
-        } catch (Exception e) {
-            // cell value is not a date, ignore
-        }
 
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue();
@@ -65,5 +63,15 @@ public class ExcelUtils {
             case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
             default -> "";
         };
+    }
+
+    public static Optional<ZonedDateTime> parseExcelDate(String value) {
+        try {
+            var daysSince1900 = (int) Double.parseDouble(value.trim());
+            var date = DateUtil.getJavaDate(daysSince1900, false).toInstant().atZone(ZoneId.of("Europe/Berlin"));
+            return Optional.of(date);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 }

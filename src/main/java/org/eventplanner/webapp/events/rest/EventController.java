@@ -30,7 +30,7 @@ public class EventController {
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/by-year/{year}")
-    public ResponseEntity<List<EventRepresentation>> getEventsByYear(@PathVariable int year) {
+    public ResponseEntity<List<EventRepresentation>> getEventsByYear(@PathVariable("year") int year) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         var events = eventService.getEvents(signedInUser, year)
                 .stream()
@@ -47,21 +47,21 @@ public class EventController {
     }
 
     @RequestMapping(method = RequestMethod.PUT, path = "/by-key/{eventKey}")
-    public ResponseEntity<EventRepresentation> updateEvent(@PathVariable String eventKey, @RequestBody UpdateEventRequest spec) {
+    public ResponseEntity<EventRepresentation> updateEvent(@PathVariable("eventKey") String eventKey, @RequestBody UpdateEventRequest spec) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.updateEvent(signedInUser, new EventKey(eventKey), spec.toDomain());
         return ResponseEntity.ok(EventRepresentation.fromDomain(event));
     }
 
     @RequestMapping(method = RequestMethod.DELETE, path = "/by-key/{eventKey}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable String eventKey) {
+    public ResponseEntity<Void> deleteEvent(@PathVariable("eventKey") String eventKey) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         eventService.deleteEvent(signedInUser, new EventKey(eventKey));
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/by-key/{eventKey}/waitinglist")
-    public ResponseEntity<EventRepresentation> addUserToWaitingList(@PathVariable String eventKey, @RequestBody AddUserToWaitingListRequest spec) {
+    public ResponseEntity<EventRepresentation> addUserToWaitingList(@PathVariable("eventKey") String eventKey, @RequestBody AddUserToWaitingListRequest spec) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.addUserToWaitingList(
                 signedInUser,
@@ -72,7 +72,7 @@ public class EventController {
     }
 
     @RequestMapping(method = RequestMethod.DELETE, path = "/by-key/{eventKey}/waitinglist/{userKey}")
-    public ResponseEntity<EventRepresentation> removeUserFromWaitingList(@PathVariable String eventKey, @PathVariable String userKey) {
+    public ResponseEntity<EventRepresentation> removeUserFromWaitingList(@PathVariable("eventKey") String eventKey, @PathVariable("userKey") String userKey) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.removeUserFromWaitingList(
                 signedInUser,
@@ -82,7 +82,7 @@ public class EventController {
     }
 
     @RequestMapping(method = RequestMethod.PUT, path = "/by-key/{eventKey}/registrations")
-    public ResponseEntity<EventRepresentation> updateEventTeam(@PathVariable String eventKey, @RequestBody UpdateEventTeamRequest spec) {
+    public ResponseEntity<EventRepresentation> updateEventTeam(@PathVariable("eventKey") String eventKey, @RequestBody UpdateEventTeamRequest spec) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.updateEventTeam(
                 signedInUser,
@@ -92,7 +92,7 @@ public class EventController {
     }
 
     @RequestMapping(method = RequestMethod.DELETE, path = "/by-key/{eventKey}/registrations/{userKey}")
-    public ResponseEntity<EventRepresentation> removeUserFromEventTeam(@PathVariable String eventKey, @PathVariable String userKey) {
+    public ResponseEntity<EventRepresentation> removeUserFromEventTeam(@PathVariable("eventKey") String eventKey, @PathVariable("userKey") String userKey) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.removeUserFromTeam(
                 signedInUser,

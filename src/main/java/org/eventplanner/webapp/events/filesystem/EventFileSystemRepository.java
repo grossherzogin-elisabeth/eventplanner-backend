@@ -8,7 +8,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,7 +35,7 @@ public class EventFileSystemRepository implements EventRepository {
 
     @Override
     public @NonNull Event create(@NonNull Event event) {
-        var year = event.start().atZone(ZoneId.of("Europe/Berlin")).getYear();
+        var year = event.start().getYear();
         var key =  UUID.randomUUID().toString();
         var file = new File(directory.getPath() + "/" + year + "/" + key  + ".json");
         fs.writeToFile(file, EventJsonEntity.fromDomain(event));
@@ -45,7 +44,7 @@ public class EventFileSystemRepository implements EventRepository {
 
     @Override
     public @NonNull Event update(@NonNull Event event) {
-        var year = event.start().atZone(ZoneId.of("Europe/Berlin")).getYear();
+        var year = event.start().getYear();
         var key =  UUID.randomUUID().toString();
         var file = new File(directory.getPath() + "/" + year + "/" + key  + ".json");
         fs.writeToFile(file, EventJsonEntity.fromDomain(event));

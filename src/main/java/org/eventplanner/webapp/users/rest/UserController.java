@@ -36,7 +36,7 @@ public class UserController {
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/by-key/{key}")
-    public ResponseEntity<UserDetailsRepresentation> getUserByKey(@PathVariable String key) {
+    public ResponseEntity<UserDetailsRepresentation> getUserByKey(@PathVariable("key") String key) {
         var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
         return userService.getUserByKey(signedInUser, new UserKey(key))
                 .map(UserDetailsRepresentation::fromDomain)

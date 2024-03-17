@@ -8,10 +8,8 @@ import org.eventplanner.webapp.users.models.UserKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -87,16 +85,16 @@ public class UserExcelImporter {
                 Address address = null;
                 if (!street.isBlank() && !zipcode.isBlank() && !town.isBlank()) {
                     try {
-                        address = new Address(street, town, Integer.parseInt(zipcode));
+                        address = new Address(street, town, (int) Double.parseDouble(zipcode));
                     } catch (NumberFormatException e) {
                         // TODO zipcodes are parsed as dates...
                         // log.warn("Failed to pare user address " + street + ", " + zipcode + " " + town);
                     }
                 }
-                var email = data[COL_EMAIL][r].trim();
+                var email = data[COL_EMAIL][r].trim().toLowerCase();
                 var mobile = data[COL_MOBILE][r].trim();;
                 var phone = data[COL_PHONE_PRIVATE][r].trim();;
-                var dateOfBirth = data[COL_DATE_OF_BIRTH][r].trim();;
+                var dateOfBirth = ExcelUtils.parseExcelDate(data[COL_DATE_OF_BIRTH][r]);
                 var placeOfBirth = data[COL_TOWN_OF_BIRTH][r].trim();;
                 var passNr = data[COL_PASS_NR][r].trim();;
                 user = new UserDetails(
@@ -113,7 +111,7 @@ public class UserExcelImporter {
                         email.isBlank() ? null : email,
                         phone.isBlank() ? null : phone,
                         mobile.isBlank() ? null : mobile,
-                        dateOfBirth.isBlank() ? null : parseExcelDate(dateOfBirth),
+                        dateOfBirth.orElse(null),
                         placeOfBirth.isBlank() ? null : placeOfBirth,
                         passNr.isBlank() ? null  : passNr,
                         null
@@ -130,10 +128,6 @@ public class UserExcelImporter {
             users.put(key, user);
         }
         return users.values().stream().toList();
-    }
-
-    private static @Nullable Instant parseExcelDate(@NonNull String value) {
-        return Instant.now();
     }
 
     private static @NonNull PositionKey mapPosition(@NonNull String value) {

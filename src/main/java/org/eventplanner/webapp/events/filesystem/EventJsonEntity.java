@@ -7,7 +7,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,8 +46,8 @@ public record EventJsonEntity(
                 EventState.fromString(state).orElse(EventState.PLANNED),
                 note != null ? note : "",
                 description != null ? description : "",
-                Instant.parse(start),
-                Instant.parse(end),
+                ZonedDateTime.parse(start),
+                ZonedDateTime.parse(end),
                 mapNullable(locations, LocationJsonEntity::toDomain, Collections.emptyList()),
                 mapNullable(slots, SlotJsonEntity::toDomain, Collections.emptyList()),
                 mapNullable(registrations, RegistrationJsonEntity::toDomain, Collections.emptyList()));

@@ -9,7 +9,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +51,7 @@ public record UserDetailsJsonEntity(
                 user.email(),
                 user.phone(),
                 user.mobile(),
-                mapNullable(user.dateOfBirth(), Instant::toString),
+                mapNullable(user.dateOfBirth(), ZonedDateTime::toString),
                 user.placeOfBirth(),
                 user.passNr(),
                 user.comment()
@@ -74,7 +74,7 @@ public record UserDetailsJsonEntity(
                 email,
                 phone,
                 mobile,
-                mapNullable(dateOfBirth, Instant::parse),
+                mapNullable(dateOfBirth, ZonedDateTime::parse),
                 placeOfBirth,
                 passNr,
                 comment
