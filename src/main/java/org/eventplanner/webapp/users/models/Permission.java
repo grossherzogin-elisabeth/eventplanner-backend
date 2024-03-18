@@ -1,4 +1,4 @@
-package org.eventplanner.webapp.config;
+package org.eventplanner.webapp.users.models;
 
 import java.util.Arrays;
 import java.util.Optional;

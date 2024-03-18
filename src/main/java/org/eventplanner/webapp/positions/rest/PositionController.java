@@ -1,9 +1,10 @@
 package org.eventplanner.webapp.positions.rest;
 
-import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.positions.PositionService;
 import org.eventplanner.webapp.positions.models.Position;
 import org.eventplanner.webapp.positions.models.PositionKey;
+import org.eventplanner.webapp.users.UserService;
+import org.eventplanner.webapp.users.models.SignedInUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +23,20 @@ import java.util.List;
 @EnableMethodSecurity(securedEnabled = true)
 public class PositionController {
 
+    private final UserService userService;
     private final PositionService positionService;
 
-    public PositionController(@Autowired PositionService positionService) {
+    public PositionController(
+        @Autowired UserService userService,
+        @Autowired PositionService positionService
+    ) {
+        this.userService = userService;
         this.positionService = positionService;
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     public ResponseEntity<PositionRepresentation> createPosition(@RequestBody PositionRepresentation spec) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
 
         var positionSpec = new Position(new PositionKey(""), spec.name(), spec.color(), spec.prio());
         var position = positionService.createPosition(signedInUser, positionSpec);
@@ -39,7 +45,7 @@ public class PositionController {
 
     @RequestMapping(method = RequestMethod.GET, path = "")
     public ResponseEntity<List<PositionRepresentation>> getPositions() {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
 
         var positions = positionService.getPosition(signedInUser).stream()
                 .map(PositionRepresentation::fromDomain)
@@ -49,7 +55,7 @@ public class PositionController {
 
     @RequestMapping(method = RequestMethod.PUT, path = "/{positionKey}")
     public ResponseEntity<PositionRepresentation> updatePosition(@PathVariable String positionKey, @RequestBody PositionRepresentation spec) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
 
         var positionSpec = new Position(new PositionKey(positionKey), spec.name(), spec.color(), spec.prio());
         var position = positionService.updatePosition(signedInUser, positionSpec.key(), positionSpec);
@@ -58,7 +64,7 @@ public class PositionController {
 
     @RequestMapping(method = RequestMethod.DELETE, path = "/{positionKey}")
     public ResponseEntity<Void> deletePosition(@PathVariable String positionKey) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
 
         positionService.deletePosition(signedInUser, new PositionKey(positionKey));
         return ResponseEntity.ok().build();

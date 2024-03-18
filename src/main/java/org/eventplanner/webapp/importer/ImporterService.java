@@ -1,11 +1,11 @@
 package org.eventplanner.webapp.importer;
 
-import org.eventplanner.webapp.config.Permission;
-import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.events.EventRepository;
 import org.eventplanner.webapp.events.models.Event;
 import org.eventplanner.webapp.importer.models.ImportError;
 import org.eventplanner.webapp.users.UserRepository;
+import org.eventplanner.webapp.users.models.Permission;
+import org.eventplanner.webapp.users.models.SignedInUser;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

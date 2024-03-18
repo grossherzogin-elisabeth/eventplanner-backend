@@ -1,22 +1,15 @@
-package org.eventplanner.webapp.config;
+package org.eventplanner.webapp.users.models;
 
 import org.eventplanner.webapp.exceptions.MissingPermissionException;
-import org.eventplanner.webapp.exceptions.NotImplementedException;
 import org.eventplanner.webapp.exceptions.UnauthorizedException;
-import org.eventplanner.webapp.users.models.AuthKey;
-import org.eventplanner.webapp.users.models.UserKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public record SignedInUser(
         @NonNull UserKey key,
@@ -25,8 +18,6 @@ public record SignedInUser(
         @NonNull List<Permission> permissions,
         @NonNull String email
 ) {
-
-    private static final Logger log = LoggerFactory.getLogger(SignedInUser.class);
 
     public boolean isAnonymousUser() {
         return authKey.value().equals("anonymous");
@@ -57,39 +48,30 @@ public record SignedInUser(
         throw new MissingPermissionException();
     }
 
-    public static @NonNull SignedInUser fromAuthentication(@Nullable Authentication authentication) {
-        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
-            throw new UnauthorizedException();
-        }
-        var permissions = authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .map(Permission::fromString)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
-        var roles = authentication.getAuthorities()
-                .stream()
+    public SignedInUser withPermissionsFromAuthentication(@NonNull Authentication authentication) {
+        var permissions = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .map(Role::fromString)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
+                .flatMap(Role::getPermissions);
+        var mergedPermissions = Stream.concat(permissions, permissions().stream())
+                .distinct()
                 .toList();
-        if (authentication.getPrincipal() instanceof OidcUser oidcUser) {
-            return new SignedInUser(
-                    new UserKey("todo"), // TODO get actual user key
-                    new AuthKey(oidcUser.getSubject()),
-                    roles,
-                    permissions,
-                    oidcUser.getEmail()
-            );
-        }
-        if (authentication.getPrincipal() instanceof OAuth2User) {
-            log.error("Provided authentication is an OAuth2User, which is not implemented!");
-            throw new NotImplementedException("TODO: Authentication type not implemented");
-        }
-        log.warn("Provided authentication is of unknown type: " + authentication.getClass().getName());
-        throw new UnauthorizedException();
+        return new SignedInUser(key, authKey, roles, mergedPermissions, email);
+    
+    }
+
+    public static @NonNull SignedInUser fromUser(@NonNull UserDetails user) {
+        return new SignedInUser(
+            user.key(),
+            user.authKey(),
+            user.roles(), 
+            user.roles().stream()
+                .flatMap(Role::getPermissions)
+                .distinct()
+                .toList(),
+            user.email());
     }
 
     public static @NonNull SignedInUser technicalUser(Permission ...permissions) {
@@ -99,5 +81,14 @@ public record SignedInUser(
                 List.of(Role.TECHNICAL_USER),
                 List.of(permissions),
                 "technical-user");
+    }
+
+    public static @NonNull SignedInUser anonymoUser() {
+        return new SignedInUser(
+                new UserKey("anonymous"),
+                new AuthKey("anonymous"),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                "anonymous");
     }
 }

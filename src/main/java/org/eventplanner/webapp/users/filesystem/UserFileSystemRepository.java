@@ -47,8 +47,20 @@ public class UserFileSystemRepository implements UserRepository {
     }
 
     @Override
+    public @NonNull Optional<UserDetails> findByEmail(@NonNull String email) {
+        var all = findAll();
+        return all.stream().filter(it -> email.equals(it.email())).findFirst();
+    }
+
+    @Override
     public @NonNull UserDetails create(@NonNull UserDetails user) {
-        return fs.create(user.key().value(), UserDetailsJsonEntity.fromDomain(user))
+        return fs.save(user.key().value(), UserDetailsJsonEntity.fromDomain(user))
+                .toDomain();
+    }
+
+    @Override
+    public @NonNull UserDetails update(@NonNull UserDetails user) {
+        return fs.save(user.key().value(), UserDetailsJsonEntity.fromDomain(user))
                 .toDomain();
     }
 

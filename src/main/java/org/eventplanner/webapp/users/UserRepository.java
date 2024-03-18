@@ -14,9 +14,12 @@ public interface UserRepository {
     @NonNull Optional<UserDetails> findByKey(@NonNull UserKey key);
 
     @NonNull Optional<UserDetails> findByAuthKey(@NonNull AuthKey key);
+    
+    @NonNull Optional<UserDetails> findByEmail(@NonNull String email);
 
-    @NonNull
-    UserDetails create(@NonNull UserDetails user);
+    @NonNull UserDetails create(@NonNull UserDetails user);
+
+    @NonNull UserDetails update(@NonNull UserDetails user);
 
     void deleteAll();
 }

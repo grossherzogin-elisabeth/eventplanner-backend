@@ -9,7 +9,7 @@ import java.io.Serializable;
 public record AddressJsonEntity(
         @NonNull String street,
         @NonNull String town,
-        @NonNull int zipcode
+        int zipcode
 ) implements Serializable {
 
     public static @Nullable AddressJsonEntity fromDomainNullable(@Nullable Address domain) {

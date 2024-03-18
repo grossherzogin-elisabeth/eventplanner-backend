@@ -39,13 +39,7 @@ public class FileSystemJsonRepository<E> {
         return readFromFile(file);
     }
 
-    public @NonNull E create(@NonNull String key, @NonNull E entity) {
-        var file = new File(directory + "/" + key  + ".json");
-        writeToFile(file, entity);
-        return entity;
-    }
-
-    public @NonNull E update(@NonNull String key, @NonNull E entity) {
+    public @NonNull E save(@NonNull String key, @NonNull E entity) {
         var file = new File(directory + "/" + key  + ".json");
         writeToFile(file, entity);
         return entity;

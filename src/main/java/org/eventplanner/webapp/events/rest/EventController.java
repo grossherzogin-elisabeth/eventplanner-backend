@@ -1,9 +1,10 @@
 package org.eventplanner.webapp.events.rest;
 
-import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.events.EventService;
 import org.eventplanner.webapp.events.models.EventKey;
 import org.eventplanner.webapp.positions.models.PositionKey;
+import org.eventplanner.webapp.users.UserService;
+import org.eventplanner.webapp.users.models.SignedInUser;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,15 +24,20 @@ import java.util.List;
 @EnableMethodSecurity(securedEnabled = true)
 public class EventController {
 
+    private final UserService userService;
     private final EventService eventService;
 
-    public EventController(@Autowired EventService eventService) {
+    public EventController(
+        @Autowired UserService userService,
+        @Autowired EventService eventService
+    ) {
+        this.userService = userService;
         this.eventService = eventService;
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/by-year/{year}")
     public ResponseEntity<List<EventRepresentation>> getEventsByYear(@PathVariable("year") int year) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var events = eventService.getEvents(signedInUser, year)
                 .stream()
                 .map(EventRepresentation::fromDomain)
@@ -41,28 +47,28 @@ public class EventController {
 
     @RequestMapping(method = RequestMethod.POST, path = "")
     public ResponseEntity<EventRepresentation> createEvent(@RequestBody CreateEventRequest spec) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.createEvent(signedInUser, spec.toDomain());
         return ResponseEntity.status(HttpStatus.CREATED).body(EventRepresentation.fromDomain(event));
     }
 
     @RequestMapping(method = RequestMethod.PUT, path = "/by-key/{eventKey}")
     public ResponseEntity<EventRepresentation> updateEvent(@PathVariable("eventKey") String eventKey, @RequestBody UpdateEventRequest spec) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.updateEvent(signedInUser, new EventKey(eventKey), spec.toDomain());
         return ResponseEntity.ok(EventRepresentation.fromDomain(event));
     }
 
     @RequestMapping(method = RequestMethod.DELETE, path = "/by-key/{eventKey}")
     public ResponseEntity<Void> deleteEvent(@PathVariable("eventKey") String eventKey) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         eventService.deleteEvent(signedInUser, new EventKey(eventKey));
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/by-key/{eventKey}/waitinglist")
     public ResponseEntity<EventRepresentation> addUserToWaitingList(@PathVariable("eventKey") String eventKey, @RequestBody AddUserToWaitingListRequest spec) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.addUserToWaitingList(
                 signedInUser,
                 new EventKey(eventKey),
@@ -73,7 +79,7 @@ public class EventController {
 
     @RequestMapping(method = RequestMethod.DELETE, path = "/by-key/{eventKey}/waitinglist/{userKey}")
     public ResponseEntity<EventRepresentation> removeUserFromWaitingList(@PathVariable("eventKey") String eventKey, @PathVariable("userKey") String userKey) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.removeUserFromWaitingList(
                 signedInUser,
                 new EventKey(eventKey),
@@ -83,7 +89,7 @@ public class EventController {
 
     @RequestMapping(method = RequestMethod.PUT, path = "/by-key/{eventKey}/registrations")
     public ResponseEntity<EventRepresentation> updateEventTeam(@PathVariable("eventKey") String eventKey, @RequestBody UpdateEventTeamRequest spec) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.updateEventTeam(
                 signedInUser,
                 new EventKey(eventKey),
@@ -93,7 +99,7 @@ public class EventController {
 
     @RequestMapping(method = RequestMethod.DELETE, path = "/by-key/{eventKey}/registrations/{userKey}")
     public ResponseEntity<EventRepresentation> removeUserFromEventTeam(@PathVariable("eventKey") String eventKey, @PathVariable("userKey") String userKey) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.removeUserFromTeam(
                 signedInUser,
                 new EventKey(eventKey),

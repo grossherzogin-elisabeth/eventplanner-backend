@@ -1,7 +1,5 @@
 package org.eventplanner.webapp.events;
 
-import org.eventplanner.webapp.config.Permission;
-import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.events.models.CreateEventSpec;
 import org.eventplanner.webapp.events.models.Event;
 import org.eventplanner.webapp.events.models.EventKey;
@@ -9,6 +7,8 @@ import org.eventplanner.webapp.events.models.Registration;
 import org.eventplanner.webapp.events.models.UpdateEventSpec;
 import org.eventplanner.webapp.exceptions.NotImplementedException;
 import org.eventplanner.webapp.positions.models.PositionKey;
+import org.eventplanner.webapp.users.models.Permission;
+import org.eventplanner.webapp.users.models.SignedInUser;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;

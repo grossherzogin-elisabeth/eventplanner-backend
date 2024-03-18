@@ -1,12 +1,13 @@
 package org.eventplanner.webapp.config;
 
+import org.eventplanner.webapp.users.models.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
@@ -66,6 +67,10 @@ public class SecurityConfig {
             logout.backChannel(withDefaults());
         });
 
+        http.sessionManagement(session -> {
+            session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS);
+        });            
+
         return http.build();
     }
 
@@ -83,33 +88,19 @@ public class SecurityConfig {
 
     private Stream<String> extractOidcRoles(OidcUserAuthority oidcUserAuthority) {
         Stream.Builder<String> resultStream = Stream.builder();
-        // var sub = oidcUserAuthority.getIdToken().getClaimAsString("sub");
-        // var email = oidcUserAuthority.getIdToken().getClaimAsString("email");
-        // TODO find application roles for sub or email
         var email = oidcUserAuthority.getIdToken().getEmail();
+        
         if (everyoneIsAdmin) {
             resultStream.add(Role.ADMIN.value());
-            getPermissionsByRole(Role.ADMIN)
-                    .map(Permission::value)
-                    .forEach(resultStream::add);
         } else if ("admin@grossherzogin-elisabeth.de".equals(email)) {
             resultStream.add(Role.ADMIN.value());
-            getPermissionsByRole(Role.ADMIN)
-                    .map(Permission::value)
-                    .forEach(resultStream::add);
         } else {
             resultStream.add(Role.TEAM_MEMBER.value());
-            getPermissionsByRole(Role.TEAM_MEMBER)
-                    .map(Permission::value)
-                    .forEach(resultStream::add);
         }
         var roles = oidcUserAuthority.getIdToken().getClaimAsStringList("ROLES");
         if (roles != null) {
             for (String role : roles) {
                 resultStream.add(role);
-                getPermissionsByRole(role)
-                        .map(Permission::value)
-                        .forEach(resultStream::add);
             }
         }
         return resultStream.build();
@@ -131,55 +122,4 @@ public class SecurityConfig {
         return resultStream.build();
     }
 
-    private @NonNull Stream<Permission> getPermissionsByRole(@NonNull String role) {
-        return Role.fromString(role)
-                .map(this::getPermissionsByRole)
-                .orElse(Stream.empty());
-    }
-    private @NonNull Stream<Permission> getPermissionsByRole(@NonNull Role role) {
-        return switch (role) {
-            case TECHNICAL_USER -> Stream.empty();
-            case ADMIN -> Stream.of(Permission.values());
-            case NONE -> Stream.of(
-                    Permission.READ_OWN_USER_DETAILS,
-                    Permission.WRITE_OWN_USER_DETAILS
-            );
-            case TEAM_MEMBER -> Stream.of(
-                    Permission.READ_OWN_USER_DETAILS,
-                    Permission.WRITE_OWN_USER_DETAILS,
-                    Permission.READ_EVENTS,
-                    Permission.READ_USERS,
-                    Permission.READ_POSITIONS,
-                    Permission.JOIN_LEAVE_EVENT_TEAM
-            );
-            case EVENT_PLANNER -> Stream.of(
-                    Permission.READ_OWN_USER_DETAILS,
-                    Permission.WRITE_OWN_USER_DETAILS,
-                    Permission.READ_EVENTS,
-                    Permission.READ_USERS,
-                    Permission.READ_POSITIONS,
-                    Permission.WRITE_EVENTS
-            );
-            case TEAM_PLANNER -> Stream.of(
-                    Permission.READ_OWN_USER_DETAILS,
-                    Permission.WRITE_OWN_USER_DETAILS,
-                    Permission.READ_EVENTS,
-                    Permission.READ_USERS,
-                    Permission.READ_POSITIONS,
-                    Permission.JOIN_LEAVE_EVENT_TEAM,
-                    Permission.WRITE_EVENT_TEAM,
-                    Permission.READ_USER_DETAILS
-            );
-            case USER_MANAGER -> Stream.of(
-                    Permission.READ_OWN_USER_DETAILS,
-                    Permission.WRITE_OWN_USER_DETAILS,
-                    Permission.READ_EVENTS,
-                    Permission.READ_USERS,
-                    Permission.READ_POSITIONS,
-                    Permission.READ_USER_DETAILS,
-                    Permission.WRITE_USERS,
-                    Permission.WRITE_POSITIONS
-            );
-        };
-    }
 }

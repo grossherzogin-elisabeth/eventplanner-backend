@@ -1,6 +1,5 @@
 package org.eventplanner.webapp.users.models;
 
-import org.eventplanner.webapp.config.Role;
 import org.eventplanner.webapp.positions.models.PositionKey;
 import org.eventplanner.webapp.qualifications.models.QualificationKey;
 import org.springframework.lang.NonNull;
@@ -42,6 +41,28 @@ public record UserDetails(
         }
         stb.append(lastName);
         return stb.toString();
+    }
+
+    public UserDetails withAuthKey(AuthKey authKey) {
+        return new UserDetails(
+                key,
+                authKey,
+                title,
+                firstName,
+                secondName,
+                lastName,
+                positions,
+                roles,
+                qualifications,
+                address,
+                email,
+                phone,
+                mobile,
+                dateOfBirth,
+                placeOfBirth,
+                passNr,
+                comment
+        );
     }
 
     public UserDetails withAddPosition(PositionKey position) {

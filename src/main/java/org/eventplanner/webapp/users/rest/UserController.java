@@ -1,7 +1,7 @@
 package org.eventplanner.webapp.users.rest;
 
-import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.users.UserService;
+import org.eventplanner.webapp.users.models.SignedInUser;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,7 +28,7 @@ public class UserController {
 
     @RequestMapping(method = RequestMethod.GET, path = "")
     public ResponseEntity<List<UserRepresentation>> getUsers() {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var users = userService.getUsers(signedInUser).stream()
                 .map(UserRepresentation::fromDomain)
                 .toList();
@@ -37,7 +37,7 @@ public class UserController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/by-key/{key}")
     public ResponseEntity<UserDetailsRepresentation> getUserByKey(@PathVariable("key") String key) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         return userService.getUserByKey(signedInUser, new UserKey(key))
                 .map(UserDetailsRepresentation::fromDomain)
                 .map(ResponseEntity::ok)

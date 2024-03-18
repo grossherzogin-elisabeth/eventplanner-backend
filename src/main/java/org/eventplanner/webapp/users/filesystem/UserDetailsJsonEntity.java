@@ -1,8 +1,8 @@
 package org.eventplanner.webapp.users.filesystem;
 
-import org.eventplanner.webapp.config.Role;
 import org.eventplanner.webapp.positions.models.PositionKey;
 import org.eventplanner.webapp.users.models.AuthKey;
+import org.eventplanner.webapp.users.models.Role;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.lang.NonNull;

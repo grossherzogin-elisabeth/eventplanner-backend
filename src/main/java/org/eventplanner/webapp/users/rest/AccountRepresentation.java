@@ -1,8 +1,8 @@
 package org.eventplanner.webapp.users.rest;
 
-import org.eventplanner.webapp.config.Permission;
-import org.eventplanner.webapp.config.Role;
-import org.eventplanner.webapp.config.SignedInUser;
+import org.eventplanner.webapp.users.models.Permission;
+import org.eventplanner.webapp.users.models.Role;
+import org.eventplanner.webapp.users.models.SignedInUser;
 import org.springframework.lang.NonNull;
 
 import java.io.Serializable;

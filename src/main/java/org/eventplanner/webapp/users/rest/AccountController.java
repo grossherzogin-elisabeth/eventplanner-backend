@@ -1,6 +1,7 @@
 package org.eventplanner.webapp.users.rest;
 
-import org.eventplanner.webapp.config.SignedInUser;
+import org.eventplanner.webapp.users.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,9 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 @EnableMethodSecurity(securedEnabled = true)
 public class AccountController {
 
+   private final UserService userService;
+
+    public AccountController(@Autowired UserService userService) {
+        this.userService = userService;
+    }
+
     @RequestMapping(method = RequestMethod.GET, path = "")
     public ResponseEntity<AccountRepresentation> getSignedInUser() {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         return ResponseEntity.ok(AccountRepresentation.fromDomain(signedInUser));
     }
 }

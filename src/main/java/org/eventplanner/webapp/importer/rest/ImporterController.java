@@ -1,7 +1,8 @@
 package org.eventplanner.webapp.importer.rest;
 
-import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.importer.ImporterService;
+import org.eventplanner.webapp.users.UserService;
+import org.eventplanner.webapp.users.models.SignedInUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +23,19 @@ import java.util.List;
 public class ImporterController {
 
     private final ImporterService importerService;
+    private final UserService userService;
 
-    public ImporterController(@Autowired ImporterService importerService) {
+    public ImporterController(
+        @Autowired UserService userService,
+        @Autowired ImporterService importerService
+    ) {
+        this.userService = userService;
         this.importerService = importerService;
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/events/{year}")
     public ResponseEntity<List<ImportErrorRepresentation>> importEvents(@PathVariable int year, @RequestParam("file") MultipartFile file) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
 
         try (var stream = file.getInputStream()) {
             var errors = this.importerService.importEvents(signedInUser, year, stream).stream()
@@ -43,7 +49,7 @@ public class ImporterController {
 
     @RequestMapping(method = RequestMethod.POST, value = "/users")
     public ResponseEntity<Void> importUsers(@RequestParam("file") MultipartFile file) {
-        var signedInUser = SignedInUser.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
 
         try (var stream = file.getInputStream()) {
             this.importerService.importUsers(signedInUser, stream);

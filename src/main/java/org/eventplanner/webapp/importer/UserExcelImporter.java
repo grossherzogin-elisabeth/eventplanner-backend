@@ -1,8 +1,8 @@
 package org.eventplanner.webapp.importer;
 
-import org.eventplanner.webapp.config.Role;
 import org.eventplanner.webapp.positions.models.PositionKey;
 import org.eventplanner.webapp.users.models.Address;
+import org.eventplanner.webapp.users.models.Role;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.slf4j.Logger;

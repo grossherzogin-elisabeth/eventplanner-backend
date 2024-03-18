@@ -1,10 +1,10 @@
 package org.eventplanner.webapp.positions;
 
-import org.eventplanner.webapp.config.Permission;
-import org.eventplanner.webapp.config.SignedInUser;
 import org.eventplanner.webapp.exceptions.NotImplementedException;
 import org.eventplanner.webapp.positions.models.Position;
 import org.eventplanner.webapp.positions.models.PositionKey;
+import org.eventplanner.webapp.users.models.Permission;
+import org.eventplanner.webapp.users.models.SignedInUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;

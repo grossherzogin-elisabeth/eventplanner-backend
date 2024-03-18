@@ -10,7 +10,7 @@ public record PositionJsonEntity(
         @NonNull String key,
         @NonNull String name,
         @NonNull String color,
-        @NonNull int prio
+        int prio
 
 ) implements Serializable {
     public Position toDomain() {
