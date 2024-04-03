@@ -50,10 +50,9 @@ public class OAuthLogoutHandler implements LogoutHandler {
     }
 
     private String getLogoutUrl(Authentication authentication) {
-        if (!(authentication instanceof OAuth2AuthenticationToken)) {
+        if (!(authentication instanceof OAuth2AuthenticationToken oAuth2Token)) {
             throw new IllegalStateException("Provided authentication is not a an OAuth2AuthenticationToken");
         }
-        final var oAuth2Token = (OAuth2AuthenticationToken) authentication;
 
         final var clientRegistration = knownClientRegistrationIds.stream()
                 .filter(clientRegistrationId -> clientRegistrationId.equals(oAuth2Token.getAuthorizedClientRegistrationId()))
@@ -61,16 +60,14 @@ public class OAuthLogoutHandler implements LogoutHandler {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Unknown client registration"));
 
-        if (!(oAuth2Token.getPrincipal() instanceof OidcUser)) {
+        if (!(oAuth2Token.getPrincipal() instanceof OidcUser oidcUser)) {
             throw new IllegalStateException("User is not a an OidcUser");
         }
-        final var oidcUser = (OidcUser) oAuth2Token.getPrincipal();
 
         var metadata = clientRegistration.getProviderDetails().getConfigurationMetadata();
-        if (!(metadata.get("end_session_endpoint") instanceof String)) {
+        if (!(metadata.get("end_session_endpoint") instanceof String logoutEndpoint)) {
             throw new IllegalStateException(format("The OpenID-Connect client %s does not support logout", clientRegistration.getClientName()));
         }
-        final var logoutEndpoint = (String) metadata.get("end_session_endpoint");
 
         return UriComponentsBuilder.fromUriString(logoutEndpoint)
                 .queryParam("id_token_hint", oidcUser.getIdToken().getTokenValue())

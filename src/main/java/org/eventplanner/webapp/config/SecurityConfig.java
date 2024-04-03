@@ -46,6 +46,7 @@ public class SecurityConfig {
         http.oauth2Login(oauth2Login -> {
             // open frontend home page after login
             oauth2Login.defaultSuccessUrl(loginSuccessUrl, true);
+            oauth2Login.failureUrl(loginSuccessUrl);
             oauth2Login.authorizationEndpoint(authorizationEndpoint -> authorizationEndpoint.baseUri("/auth/login"));
             oauth2Login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userAuthoritiesMapper(oAuthGrantedAuthoritiesMapper()));
         });
@@ -61,6 +62,7 @@ public class SecurityConfig {
         http.logout(logout -> {
             logout.logoutUrl("/auth/logout");
             logout.addLogoutHandler(oauthLogoutHandler);
+            logout.logoutSuccessUrl(loginSuccessUrl);
         });
 
         http.oidcLogout(logout -> {
