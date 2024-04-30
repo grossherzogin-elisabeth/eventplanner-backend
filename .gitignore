@@ -41,3 +41,4 @@ application-local.properties
 .DS_Store
 
 /data/
+/src/main/resources/static
