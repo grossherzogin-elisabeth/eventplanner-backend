@@ -16,16 +16,25 @@ repositories {
 }
 
 dependencies {
+	// spring
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	implementation 'com.google.code.gson:gson:2.10.+'
+	implementation 'com.google.code.gson:gson:2.10.+' // json parsing
+
+	// excel
 	implementation 'org.apache.poi:poi:5.2.+'
 	implementation 'org.apache.poi:poi-ooxml:5.2.+'
 
+	// tests
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+
+	// silence "unknown enum constant javax.annotation.meta.When.MAYBE" warning
+	// https://stackoverflow.com/questions/53326271/spring-nullable-annotation-generates-unknown-enum-constant-warning
+	// https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305
+	implementation 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
 tasks.named('test') {
