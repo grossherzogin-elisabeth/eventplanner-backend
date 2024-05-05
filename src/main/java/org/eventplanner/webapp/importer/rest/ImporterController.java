@@ -3,6 +3,8 @@ package org.eventplanner.webapp.importer.rest;
 import org.eventplanner.webapp.importer.ImporterService;
 import org.eventplanner.webapp.users.UserService;
 import org.eventplanner.webapp.users.models.SignedInUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import java.util.List;
 @EnableMethodSecurity(securedEnabled = true)
 public class ImporterController {
 
+    private static final Logger log = LoggerFactory.getLogger(ImporterController.class);
     private final ImporterService importerService;
     private final UserService userService;
 
@@ -43,6 +46,7 @@ public class ImporterController {
                     .toList();
             return ResponseEntity.ok(errors);
         } catch (Exception e) {
+            log.error("Failed to import events", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
@@ -55,6 +59,7 @@ public class ImporterController {
             this.importerService.importUsers(signedInUser, stream);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            log.error("Failed to import users", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
