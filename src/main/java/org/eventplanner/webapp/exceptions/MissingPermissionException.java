@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.FORBIDDEN)
-public class MissingPermissionException extends RuntimeException {
+public class MissingPermissionException extends HandledException {
     public MissingPermissionException() {
         super();
     }

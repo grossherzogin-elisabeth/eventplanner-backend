@@ -7,6 +7,7 @@ import org.eventplanner.webapp.users.models.UserKey;
 import org.eventplanner.webapp.utils.FileSystemJsonRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
@@ -40,14 +41,20 @@ public class UserFileSystemRepository implements UserRepository {
     }
 
     @Override
-    public @NonNull Optional<UserDetails> findByAuthKey(@NonNull AuthKey key) {
+    public @NonNull Optional<UserDetails> findByAuthKey(@Nullable AuthKey key) {
         // TODO every inefficient
+        if (key == null) {
+            return Optional.empty();
+        }
         var all = findAll();
         return all.stream().filter(it -> key.equals(it.authKey())).findFirst();
     }
 
     @Override
-    public @NonNull Optional<UserDetails> findByEmail(@NonNull String email) {
+    public @NonNull Optional<UserDetails> findByEmail(@Nullable String email) {
+        if (email == null) {
+            return Optional.empty();
+        }
         var all = findAll();
         return all.stream().filter(it -> email.equals(it.email())).findFirst();
     }

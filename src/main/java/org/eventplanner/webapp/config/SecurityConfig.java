@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.springframework.security.config.Customizer.withDefaults;

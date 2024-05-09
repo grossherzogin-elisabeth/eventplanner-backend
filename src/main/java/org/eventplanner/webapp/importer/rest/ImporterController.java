@@ -1,8 +1,8 @@
 package org.eventplanner.webapp.importer.rest;
 
+import org.eventplanner.webapp.exceptions.HandledException;
 import org.eventplanner.webapp.importer.ImporterService;
 import org.eventplanner.webapp.users.UserService;
-import org.eventplanner.webapp.users.models.SignedInUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +45,8 @@ public class ImporterController {
                     .map(ImportErrorRepresentation::fromDomain)
                     .toList();
             return ResponseEntity.ok(errors);
+        } catch (HandledException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to import events", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -58,6 +60,8 @@ public class ImporterController {
         try (var stream = file.getInputStream()) {
             this.importerService.importUsers(signedInUser, stream);
             return ResponseEntity.ok().build();
+        } catch (HandledException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to import users", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
