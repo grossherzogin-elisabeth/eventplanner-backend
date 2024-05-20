@@ -51,65 +51,69 @@ public class EventExcelImporter {
         }
         var events = new ArrayList<Event>();
         for (int i = 1; i < data.length; i++) {
-            var raw = data[i];
-            var eventKey = new EventKey(UUID.randomUUID().toString());
-            var start = parseExcelDate(raw[2], year, 0);
-            var end = parseExcelDate(raw[2], year, 1);
-            var eventName = removeDuplicateWhitespaces(raw[1]);
-            if (eventName.startsWith("SR")) {
-                eventName = eventName.replace("SR", "Sommerreise");
-            }
-            var slots = generateDefaultEventSlots(eventName);
-            var waitingListReached = false;
-            var registrations = new ArrayList<Registration>();
-            for (int r = 4; r < raw.length; r++) {
-                var name = raw[r];
-                if (name.isBlank()
-                        || name.equals("noch zu benennen")
-                        || name.equals("noch zu besetzen")) {
-                    continue;
+            try {
+                var raw = data[i];
+                var eventKey = new EventKey(UUID.randomUUID().toString());
+                var start = parseExcelDate(raw[2], year, 0);
+                var end = parseExcelDate(raw[2], year, 1);
+                var eventName = removeDuplicateWhitespaces(raw[1]);
+                if (eventName.startsWith("SR")) {
+                    eventName = eventName.replace("SR", "Sommerreise");
                 }
-                if (name.contains("Warteliste")) {
-                    waitingListReached = true;
-                    continue;
-                }
-                var user = findMatchingUser(name, knownUsers).orElse(null);
-                if (user == null) {
-                    var message = "'" + name + "' konnte nicht in der Kaderliste gefunden werden.";
-                    errors.add(new ImportError(eventKey, eventName, start, end, message));
-                }
-                var userKey = mapNullable(user, UserDetails::key);
-                var positionKey = mapPosition(data[0][r]);
-                if (user != null && !user.positions().contains(positionKey)) {
-                    var message = "'" + name + "' hat nicht die Position '" + positionKey.value() + "'.";
-                    errors.add(new ImportError(eventKey, eventName, start, end, message));
-                    positionKey = user.positions().getFirst();
-                }
-                var registration = userKey != null
-                        ? Registration.ofUser(userKey, positionKey)
-                        : Registration.ofPerson(name, positionKey);
-                if (!waitingListReached) {
-                    try {
-                        registration = assignToFirstMatchingSlot(registration, slots, registrations);
-                    } catch (Exception e) {
-                        log.warn("Failed to find matching " + positionKey.value() + " slot for "  +  name + " at event " + eventName + " starting on " + start.toString());
+                var slots = generateDefaultEventSlots(eventName);
+                var waitingListReached = false;
+                var registrations = new ArrayList<Registration>();
+                for (int r = 4; r < raw.length; r++) {
+                    var name = raw[r];
+                    if (name.isBlank()
+                            || name.equals("noch zu benennen")
+                            || name.equals("noch zu besetzen")) {
+                        continue;
                     }
+                    if (name.contains("Warteliste")) {
+                        waitingListReached = true;
+                        continue;
+                    }
+                    var user = findMatchingUser(name, knownUsers).orElse(null);
+                    if (user == null) {
+                        var message = "'" + name + "' konnte nicht in der Kaderliste gefunden werden.";
+                        errors.add(new ImportError(eventKey, eventName, start, end, message));
+                    }
+                    var userKey = mapNullable(user, UserDetails::key);
+                    var positionKey = mapPosition(data[0][r]);
+                    if (user != null && !user.positions().contains(positionKey)) {
+                        var message = "'" + name + "' hat nicht die Position '" + positionKey.value() + "'.";
+                        errors.add(new ImportError(eventKey, eventName, start, end, message));
+                        positionKey = user.positions().getFirst();
+                    }
+                    var registration = userKey != null
+                            ? Registration.ofUser(userKey, positionKey)
+                            : Registration.ofPerson(name, positionKey);
+                    if (!waitingListReached) {
+                        try {
+                            registration = assignToFirstMatchingSlot(registration, slots, registrations);
+                        } catch (Exception e) {
+                            log.warn("Failed to find matching " + positionKey.value() + " slot for "  +  name + " at event " + eventName + " starting on " + start.toString());
+                        }
+                    }
+                    registrations.add(registration);
                 }
-                registrations.add(registration);
+                var event = new Event(
+                        eventKey,
+                        eventName,
+                        EventState.PLANNED,
+                        raw[3],
+                        "",
+                        start,
+                        end,
+                        getLocationsFromText(raw[1]),
+                        slots,
+                        registrations
+                );
+                events.add(event);
+            } catch (Exception e) {
+                log.error("Failed to import event at index {}", i, e);
             }
-            var event = new Event(
-                    eventKey,
-                    eventName,
-                    EventState.PLANNED,
-                    raw[3],
-                    "",
-                    start,
-                    end,
-                    getLocationsFromText(raw[1]),
-                    slots,
-                    registrations
-            );
-            events.add(event);
         }
         return events;
     }
@@ -231,10 +235,17 @@ public class EventExcelImporter {
 
     private static ZonedDateTime parseExcelDate(String value, int year, int index) {
         try {
+            if (value.endsWith(".0")) {
+                var maybeDate = ExcelUtils.parseExcelDate(value);
+                if (maybeDate.isPresent()) {
+                    return maybeDate.get();
+                }
+            }
             var date = Instant.parse(value).atZone(ZoneId.of("Europe/Berlin"));
             if (date.getYear() == year) {
                 return date;
             }
+
         } catch (DateTimeParseException e) {
             // expected
         } catch (Exception e) {
@@ -249,9 +260,18 @@ public class EventExcelImporter {
         var dayMonth = Arrays.stream(date.split("\\.")).filter(it -> !it.isBlank()).toList();
         String format = "yyyy-mm-ddT16:00:00.00Z";
         format = format.replace("yyyy", String.valueOf(year));
+        if (dayMonth.size() < 2) {
+            log.warn("Failed to parse '{}' as date. Invalid date format!", date);
+            return ZonedDateTime.now();
+        }
         format = format.replace("mm", dayMonth.get(1));
         format = format.replace("dd", dayMonth.get(0));
-        return ZonedDateTime.parse(format);
+        try {
+            return ZonedDateTime.parse(format);
+        } catch (Exception e) {
+            log.warn("Failed to parse '{}' as zoned date time!", format);
+            return ZonedDateTime.now();
+        }
     }
 
     private static PositionKey mapPosition(String value) {
