@@ -2,6 +2,7 @@ package org.eventplanner.webapp.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.eventplanner.webapp.events.models.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -12,10 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class FileSystemJsonRepository<E> {
 
@@ -23,6 +21,7 @@ public class FileSystemJsonRepository<E> {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final String directory;
     private final Class<E> entityClass;
+    private final Map<String, List<E>> cache = new HashMap<>();
 
     public FileSystemJsonRepository(Class<E> e, File directory) {
         this.entityClass = e;
@@ -42,6 +41,7 @@ public class FileSystemJsonRepository<E> {
     public @NonNull E save(@NonNull String key, @NonNull E entity) {
         var file = new File(directory + "/" + key  + ".json");
         writeToFile(file, entity);
+        cache.remove(directory);
         return entity;
     }
 
@@ -51,8 +51,9 @@ public class FileSystemJsonRepository<E> {
             return;
         }
         if (!file.delete()) {
-            log.warn("Failed to delete file " + file.getPath());
+            log.warn("Failed to delete file {}", file.getPath());
         }
+        cache.remove(directory);
     }
 
     public void deleteAll() {
@@ -73,12 +74,16 @@ public class FileSystemJsonRepository<E> {
                 continue;
             }
             if (!file.delete()) {
-                log.warn("Failed to delete file " + file.getPath());
+                log.warn("Failed to delete files in directory {}", file.getPath());
             }
         }
+        cache.remove(dir.getAbsolutePath());
     }
 
     public @NonNull List<E> readAllFromDirectory(@NonNull File dir) {
+        if (cache.containsKey(dir.getAbsolutePath())) {
+            return cache.get(dir.getAbsolutePath());
+        }
         if (!dir.exists() || !dir.isDirectory()) {
             return Collections.emptyList();
         }
@@ -95,6 +100,8 @@ public class FileSystemJsonRepository<E> {
                 readFromFile(file).ifPresent(entities::add);
             }
         }
+
+        cache.put(dir.getAbsolutePath(), entities);
         return entities;
     }
 
