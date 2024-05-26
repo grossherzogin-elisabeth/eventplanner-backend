@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 
+import java.io.File;
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -31,13 +32,13 @@ public class EventExcelImporter {
 
     private static final Logger log = LoggerFactory.getLogger(EventExcelImporter.class);
 
-    public static @NonNull List<Event> readFromInputStream(@NonNull InputStream in, int year, List<UserDetails> knownUsers) {
-        return readFromInputStream(in, year, knownUsers, new ArrayList<>());
+    public static @NonNull List<Event> readFromFile(@NonNull File file, int year, List<UserDetails> knownUsers) {
+        return readFromFile(file, year, knownUsers, new ArrayList<>());
     }
 
-    public static @NonNull List<Event> readFromInputStream(@NonNull InputStream in, int year, List<UserDetails> knownUsers, List<ImportError> errors) {
+    public static @NonNull List<Event> readFromFile(@NonNull File file, int year, List<UserDetails> knownUsers, List<ImportError> errors) {
         try {
-            var data = ExcelUtils.readExcelFile(in);
+            var data = ExcelUtils.readExcelFile(file);
             return parseEvents(data, year, knownUsers, errors);
         } catch (Exception e) {
             log.error("Failed to read excel file", e);

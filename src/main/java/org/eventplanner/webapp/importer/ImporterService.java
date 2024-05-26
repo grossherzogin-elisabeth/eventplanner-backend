@@ -16,7 +16,11 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +30,7 @@ public class ImporterService {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final String dataDirectory;
 
     public ImporterService(
             @Autowired EventRepository eventRepository,
@@ -34,43 +39,69 @@ public class ImporterService {
     ) {
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
+        this.dataDirectory = dataDirectory;
+        importOnStartup();
+    }
 
+    private void importOnStartup() {
         var users = new File(dataDirectory + "/import/users.xlsx");
         if (users.exists()) {
-            log.info("Importing users from xlsx");
-            try (var in = new FileInputStream(users)) {
-                importUsers(SignedInUser.technicalUser(Permission.WRITE_USERS), in);
+            log.info("Importing users from " + users.getAbsolutePath());
+            try {
+                importUsersFromFile(users);
             } catch (Exception e) {
                 log.error("Failed to import users on startup", e);
             }
         }
 
-//        var events2023 = new File(dataDirectory + "/import/events-2023.xlsx");
-//        if (events2023.exists()) {
-//            log.info("Importing events 2023 from xlsx");
-//            try (var in = new FileInputStream(events2023)) {
-//                importEvents(SignedInUser.technicalUser(Permission.WRITE_EVENTS), 2023, in);
-//            } catch (Exception e) {
-//                log.error("Failed to import events on startup", e);
-//            }
-//        }
+        var events2023 = new File(dataDirectory + "/import/events-2023.xlsx");
+        if (events2023.exists()) {
+            log.info("Importing events 2023 from " + events2023.getAbsolutePath());
+            try {
+                importEventsFromFile(2023, events2023);
+            } catch (Exception e) {
+                log.error("Failed to import events 2023 on startup", e);
+            }
+        }
 
-//        var events2024 = new File(dataDirectory + "/import/events-2024.xlsx");
-//        if (events2024.exists()) {
-//            log.info("Importing events 2024 from xlsx");
-//            try (var in = new FileInputStream(events2024)) {
-//                importEvents(SignedInUser.technicalUser(Permission.WRITE_EVENTS), 2024, in);
-//            } catch (Exception e) {
-//                log.error("Failed to import events on startup", e);
-//            }
-//        }
+        var events2024 = new File(dataDirectory + "/import/events-2024.xlsx");
+        if (events2024.exists()) {
+            log.info("Importing events 2024 from " + events2024.getAbsolutePath());
+            try {
+                importEventsFromFile(2024, events2024);
+            } catch (Exception e) {
+                log.error("Failed to import events 2024 on startup", e);
+            }
+        }
     }
 
     public List<ImportError> importEvents(@NonNull SignedInUser signedInUser, int year, InputStream stream) {
         signedInUser.assertHasPermission(Permission.WRITE_EVENTS);
+
+        var tempFile = new File(dataDirectory + "/import/events-" + year + ".tmp.xlsx");
+        try {
+            new File(tempFile.getParent()).mkdirs();
+            Files.copy(stream, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Failed to save temporary events import file", e);
+        }
+
+        var errors = importEventsFromFile(year, tempFile);
+
+        try {
+            var file = new File(dataDirectory + "/import/events-" + year + ".xlsx");
+            Files.move(tempFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Failed to save events import file", e);
+        }
+
+        return errors;
+    }
+
+    private List<ImportError> importEventsFromFile(int year, @NonNull File file) {
         var users =  userRepository.findAll();
         var errors = new ArrayList<ImportError>();
-        var events = EventExcelImporter.readFromInputStream(stream, year, users, errors);
+        var events = EventExcelImporter.readFromFile(file, year, users, errors);
         eventRepository.deleteAllByYear(year);
         for (Event event : events) {
             eventRepository.create(event);
@@ -80,7 +111,27 @@ public class ImporterService {
 
     public void importUsers(@NonNull SignedInUser signedInUser, InputStream stream) {
         signedInUser.assertHasPermission(Permission.WRITE_USERS);
-        var users = UserExcelImporter.readFromInputStream(stream);
+
+        var tempFile = new File(dataDirectory + "/import/users.tmp.xlsx");
+        try {
+            new File(tempFile.getParent()).mkdirs();
+            Files.copy(stream, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Failed to save temporary users import file", e);
+        }
+
+        importUsersFromFile(tempFile);
+
+        try {
+            var file = new File(dataDirectory + "/import/users.xlsx");
+            Files.move(tempFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Failed to save users import file", e);
+        }
+    }
+
+    private void importUsersFromFile(File file) {
+        var users = UserExcelImporter.readFromFile(file);
         userRepository.deleteAll();
         for (UserDetails user : users) {
             userRepository.create(user);

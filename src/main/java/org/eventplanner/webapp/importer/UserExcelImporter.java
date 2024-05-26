@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,9 +47,9 @@ public class UserExcelImporter {
 
     private static final Logger log = LoggerFactory.getLogger(UserExcelImporter.class);
 
-    public static @NonNull List<UserDetails> readFromInputStream(@NonNull InputStream in) {
+    public static @NonNull List<UserDetails> readFromFile(@NonNull File file) {
         try {
-            var data = ExcelUtils.readExcelFile(in);
+            var data = ExcelUtils.readExcelFile(file);
             return parseUsers(data);
         } catch (Exception e) {
             log.error("Failed to read excel file", e);
