@@ -36,6 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 application-local.properties
+application-local.yml
+application-local.json
 
 ### MacOS ###
 .DS_Store

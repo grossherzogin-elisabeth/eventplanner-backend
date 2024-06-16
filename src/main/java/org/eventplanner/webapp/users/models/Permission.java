@@ -12,7 +12,7 @@ public enum Permission {
     READ_OWN_USER_DETAILS("user-details:read-self"),
     WRITE_OWN_USER_DETAILS("user-details:write-self"),
     READ_USER_DETAILS("user-details:read"),
-    WRITE_USERS("users-details:write"),
+    WRITE_USERS("user-details:write"),
     READ_POSITIONS("positions:read"),
     WRITE_POSITIONS("positions:write");
 
@@ -22,13 +22,13 @@ public enum Permission {
         this.value = value;
     }
 
-    public String value() {
-        return value;
-    }
-
     public static Optional<Permission> fromString(String value) {
         return Arrays.stream(Permission.values())
-                .filter(permission -> permission.value().equals(value))
-                .findFirst();
+            .filter(permission -> permission.value().equals(value))
+            .findFirst();
+    }
+
+    public String value() {
+        return value;
     }
 }
