@@ -2,20 +2,16 @@ package org.eventplanner.webapp.events.rest;
 
 import org.eventplanner.webapp.events.EventService;
 import org.eventplanner.webapp.events.models.EventKey;
+import org.eventplanner.webapp.events.rest.models.*;
 import org.eventplanner.webapp.positions.models.PositionKey;
 import org.eventplanner.webapp.users.UserService;
-import org.eventplanner.webapp.users.models.SignedInUser;
 import org.eventplanner.webapp.users.models.UserKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -39,9 +35,9 @@ public class EventController {
     public ResponseEntity<List<EventRepresentation>> getEventsByYear(@PathVariable("year") int year) {
         var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var events = eventService.getEvents(signedInUser, year)
-                .stream()
-                .map(EventRepresentation::fromDomain)
-                .toList();
+            .stream()
+            .map(EventRepresentation::fromDomain)
+            .toList();
         return ResponseEntity.ok(events);
     }
 
@@ -70,10 +66,10 @@ public class EventController {
     public ResponseEntity<EventRepresentation> addUserToWaitingList(@PathVariable("eventKey") String eventKey, @RequestBody AddUserToWaitingListRequest spec) {
         var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.addUserToWaitingList(
-                signedInUser,
-                new EventKey(eventKey),
-                new UserKey(spec.userKey()),
-                new PositionKey(spec.positionKey()));
+            signedInUser,
+            new EventKey(eventKey),
+            new UserKey(spec.userKey()),
+            new PositionKey(spec.positionKey()));
         return ResponseEntity.status(HttpStatus.CREATED).body(EventRepresentation.fromDomain(event));
     }
 
@@ -81,9 +77,9 @@ public class EventController {
     public ResponseEntity<EventRepresentation> removeUserFromWaitingList(@PathVariable("eventKey") String eventKey, @PathVariable("userKey") String userKey) {
         var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.removeUserFromWaitingList(
-                signedInUser,
-                new EventKey(eventKey),
-                new UserKey(userKey));
+            signedInUser,
+            new EventKey(eventKey),
+            new UserKey(userKey));
         return ResponseEntity.ok(EventRepresentation.fromDomain(event));
     }
 
@@ -91,9 +87,9 @@ public class EventController {
     public ResponseEntity<EventRepresentation> updateEventTeam(@PathVariable("eventKey") String eventKey, @RequestBody UpdateEventTeamRequest spec) {
         var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.updateEventTeam(
-                signedInUser,
-                new EventKey(eventKey),
-                spec.toDomain());
+            signedInUser,
+            new EventKey(eventKey),
+            spec.toDomain());
         return ResponseEntity.ok(EventRepresentation.fromDomain(event));
     }
 
@@ -101,9 +97,9 @@ public class EventController {
     public ResponseEntity<EventRepresentation> removeUserFromEventTeam(@PathVariable("eventKey") String eventKey, @PathVariable("userKey") String userKey) {
         var signedInUser = userService.getSignedInUser(SecurityContextHolder.getContext().getAuthentication());
         var event = eventService.removeUserFromTeam(
-                signedInUser,
-                new EventKey(eventKey),
-                new UserKey(userKey));
+            signedInUser,
+            new EventKey(eventKey),
+            new UserKey(userKey));
         return ResponseEntity.ok(EventRepresentation.fromDomain(event));
     }
 }

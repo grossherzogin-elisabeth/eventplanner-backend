@@ -29,15 +29,15 @@ public class UserFileSystemRepository implements UserRepository {
     @Override
     public @NonNull List<UserDetails> findAll() {
         return fs.findAll().stream()
-                .map(UserDetailsJsonEntity::toDomain)
-                .sorted(Comparator.comparing(UserDetails::fullName))
-                .toList();
+            .map(UserDetailsJsonEntity::toDomain)
+            .sorted(Comparator.comparing(UserDetails::fullName))
+            .toList();
     }
 
     @Override
     public @NonNull Optional<UserDetails> findByKey(@NonNull UserKey key) {
         return fs.findByKey(key.value())
-                .map(UserDetailsJsonEntity::toDomain);
+            .map(UserDetailsJsonEntity::toDomain);
     }
 
     @Override
@@ -60,15 +60,25 @@ public class UserFileSystemRepository implements UserRepository {
     }
 
     @Override
+    public @NonNull Optional<UserDetails> findByName(@NonNull String firstName, @NonNull String lastName) {
+        var all = findAll();
+        return all.stream()
+            .filter(it -> it.lastName().equalsIgnoreCase(lastName))
+            .filter(it -> it.firstName().equalsIgnoreCase(firstName)
+                || (it.secondName() != null && (it.firstName() + " " + it.secondName()).equalsIgnoreCase(firstName)))
+            .findFirst();
+    }
+
+    @Override
     public @NonNull UserDetails create(@NonNull UserDetails user) {
         return fs.save(user.key().value(), UserDetailsJsonEntity.fromDomain(user))
-                .toDomain();
+            .toDomain();
     }
 
     @Override
     public @NonNull UserDetails update(@NonNull UserDetails user) {
         return fs.save(user.key().value(), UserDetailsJsonEntity.fromDomain(user))
-                .toDomain();
+            .toDomain();
     }
 
     @Override

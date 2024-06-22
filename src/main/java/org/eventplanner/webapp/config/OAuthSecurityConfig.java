@@ -23,16 +23,13 @@ public class OAuthSecurityConfig {
 
     private final String loginSuccessUrl;
     private final List<String> admins;
-    private final boolean everyoneIsAdmin;
 
     public OAuthSecurityConfig(
         @Value("${custom.login-success-url}") String loginSuccessUrl,
-        @Value("${custom.admins}") String admins,
-        @Value("${custom.everyone-is-admin}") String everyoneIsAdmin
+        @Value("${custom.admins}") String admins
     ) {
         this.loginSuccessUrl = loginSuccessUrl;
         this.admins = Arrays.stream(admins.split(",")).map(String::trim).toList();
-        this.everyoneIsAdmin = "true".equals(everyoneIsAdmin);
     }
 
     @Bean
@@ -77,29 +74,40 @@ public class OAuthSecurityConfig {
         Stream.Builder<String> resultStream = Stream.builder();
         var email = oidcUserAuthority.getIdToken().getEmail();
 
-        if (everyoneIsAdmin || admins.contains(email)) {
+        if (admins.contains(email)) {
             resultStream.add(Role.ADMIN.value());
         } else {
             resultStream.add(Role.TEAM_MEMBER.value());
         }
+
+        var cognitoRoles = oidcUserAuthority.getAttributes().get("cognito:groups");
+        if (cognitoRoles instanceof List) {
+            ((List<?>) cognitoRoles).stream()
+                .map(r -> "ROLE_" + r)
+                .forEach(resultStream::add);
+        }
+
         var roles = oidcUserAuthority.getIdToken().getClaimAsStringList("ROLES");
         if (roles != null) {
-            for (String role : roles) {
-                resultStream.add(role);
-            }
+            roles.stream()
+                .map(r -> "ROLE_" + r)
+                .forEach(resultStream::add);
         }
+
         return resultStream.build();
     }
 
     private Stream<String> extractOAuthRoles(OAuth2UserAuthority oAuth2UserAuthority) {
-        var roles = oAuth2UserAuthority.getAttributes().get("ROLES");
         var email = oAuth2UserAuthority.getAttributes().get("email");
         Stream.Builder<String> resultStream = Stream.builder();
-        if (everyoneIsAdmin || admins.contains(email)) {
+
+        if (admins.contains(email)) {
             resultStream.add(Role.ADMIN.value());
         } else {
             resultStream.add(Role.TEAM_MEMBER.value());
         }
+
+        var roles = oAuth2UserAuthority.getAttributes().get("ROLES");
         if (roles instanceof Collection<?> roleCollection) {
             for (var item : roleCollection) {
                 if (item instanceof String role) {

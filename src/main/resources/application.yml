@@ -1,11 +1,9 @@
 custom:
   data-directory: data
-  logout-success-url: ${frontend.domain}/login/oauth2/code/default
+  logout-success-url: ${frontend.domain}/login/oauth2/code/cognito
   login-success-url: ${frontend.domain}
-  everyone-is-admin: 'false'
   admins: >
-    admin@grossherzogin-elisabeth.de,
-    malte.schwitters@outlook.de
+    admin@grossherzogin-elisabeth.de
 auth:
   cognito:
     user-pool-id: ${AUTH_COGNITO_USER_POOL_ID:eu-central-1_erXnjLJc7}

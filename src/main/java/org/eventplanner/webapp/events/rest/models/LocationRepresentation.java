@@ -1,4 +1,4 @@
-package org.eventplanner.webapp.events.rest;
+package org.eventplanner.webapp.events.rest.models;
 
 import org.eventplanner.webapp.events.models.Location;
 import org.springframework.lang.NonNull;
@@ -7,24 +7,24 @@ import org.springframework.lang.Nullable;
 import java.io.Serializable;
 
 public record LocationRepresentation(
-        @NonNull String name,
-        @NonNull String icon,
-        @Nullable String address,
-        @Nullable String country
+    @NonNull String name,
+    @NonNull String icon,
+    @Nullable String address,
+    @Nullable String country
 ) implements Serializable {
     public static @NonNull LocationRepresentation fromDomain(@NonNull Location domain) {
         return new LocationRepresentation(
-                domain.name(),
-                domain.icon(),
-                domain.address(),
-                domain.country());
+            domain.name(),
+            domain.icon(),
+            domain.address(),
+            domain.country());
     }
 
     public @NonNull Location toDomain() {
         return new Location(
-                name,
-                icon,
-                address,
-                country);
+            name,
+            icon,
+            address,
+            country);
     }
 }
