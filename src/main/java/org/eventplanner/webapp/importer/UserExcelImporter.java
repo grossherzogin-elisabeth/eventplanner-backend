@@ -8,9 +8,9 @@ import org.eventplanner.webapp.users.models.UserKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,9 +47,9 @@ public class UserExcelImporter {
 
     private static final Logger log = LoggerFactory.getLogger(UserExcelImporter.class);
 
-    public static @NonNull List<UserDetails> readFromFile(@NonNull File file) {
+    public static @NonNull List<UserDetails> readFromFile(@NonNull File file, @Nullable String password) {
         try {
-            var data = ExcelUtils.readExcelFile(file);
+            var data = ExcelUtils.readExcelFile(file, password);
             return parseUsers(data);
         } catch (Exception e) {
             log.error("Failed to read excel file", e);
@@ -80,9 +80,9 @@ public class UserExcelImporter {
             var position = mapPosition(data[COL_POSITION][r]);
             UserDetails user = users.get(key);
             if (user == null) {
-                var street = data[COL_STREET][r].trim();;
-                var zipcode = data[COL_ZIPCODE][r].trim();;
-                var town = data[COL_TOWN][r].trim();;
+                var street = data[COL_STREET][r].trim();
+                var zipcode = data[COL_ZIPCODE][r].trim();
+                var town = data[COL_TOWN][r].trim();
                 Address address = null;
                 if (!street.isBlank() && !zipcode.isBlank() && !town.isBlank()) {
                     try {
@@ -93,29 +93,29 @@ public class UserExcelImporter {
                     }
                 }
                 var email = data[COL_EMAIL][r].trim().toLowerCase();
-                var mobile = data[COL_MOBILE][r].trim();;
-                var phone = data[COL_PHONE_PRIVATE][r].trim();;
+                var mobile = data[COL_MOBILE][r].trim();
+                var phone = data[COL_PHONE_PRIVATE][r].trim();
                 var dateOfBirth = ExcelUtils.parseExcelDate(data[COL_DATE_OF_BIRTH][r]);
-                var placeOfBirth = data[COL_TOWN_OF_BIRTH][r].trim();;
-                var passNr = data[COL_PASS_NR][r].trim();;
+                var placeOfBirth = data[COL_TOWN_OF_BIRTH][r].trim();
+                var passNr = data[COL_PASS_NR][r].trim();
                 user = new UserDetails(
-                        key,
-                        null,
-                        title,
-                        firstName,
-                        secondName,
-                        lastName,
-                        Collections.emptyList(),
-                        List.of(Role.TEAM_MEMBER),
-                        Collections.emptyList(),
-                        address,
-                        email.isBlank() ? null : email,
-                        phone.isBlank() ? null : phone,
-                        mobile.isBlank() ? null : mobile,
-                        dateOfBirth.orElse(null),
-                        placeOfBirth.isBlank() ? null : placeOfBirth,
-                        passNr.isBlank() ? null  : passNr,
-                        null
+                    key,
+                    null,
+                    title,
+                    firstName,
+                    secondName,
+                    lastName,
+                    Collections.emptyList(),
+                    List.of(Role.TEAM_MEMBER),
+                    Collections.emptyList(),
+                    address,
+                    email.isBlank() ? null : email,
+                    phone.isBlank() ? null : phone,
+                    mobile.isBlank() ? null : mobile,
+                    dateOfBirth.orElse(null),
+                    placeOfBirth.isBlank() ? null : placeOfBirth,
+                    passNr.isBlank() ? null : passNr,
+                    null
                 );
             }
             user = user.withAddPosition(position);
@@ -133,7 +133,7 @@ public class UserExcelImporter {
 
     private static @NonNull PositionKey mapPosition(@NonNull String value) {
         var positionNormalized = value.toLowerCase()
-                .replaceAll("[^a-zöäüß]", ""); // keep only a-z characters and a few symbols
+            .replaceAll("[^a-zöäüß]", ""); // keep only a-z characters and a few symbols
         return switch (positionNormalized) {
             case "master" -> DefaultPositions.POSITION_KAPITAEN;
             case "kapitän" -> DefaultPositions.POSITION_KAPITAEN;

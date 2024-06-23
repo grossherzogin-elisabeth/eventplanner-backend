@@ -15,10 +15,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -31,22 +29,25 @@ public class ImporterService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final String dataDirectory;
+    private final String password;
 
     public ImporterService(
-            @Autowired EventRepository eventRepository,
-            @Autowired UserRepository userRepository,
-            @Value("${custom.data-directory}") String dataDirectory
+        @Autowired EventRepository eventRepository,
+        @Autowired UserRepository userRepository,
+        @Value("${custom.data-directory}") String dataDirectory,
+        @Value("${custom.users-excel-password}") String password
     ) {
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.dataDirectory = dataDirectory;
+        this.password = password;
         importOnStartup();
     }
 
     private void importOnStartup() {
-        var users = new File(dataDirectory + "/import/users.xlsx");
+        var users = new File(dataDirectory + "/import/users.encrypted.xlsx");
         if (users.exists()) {
-            log.info("Importing users from " + users.getAbsolutePath());
+            log.info("Importing users from {}", users.getAbsolutePath());
             try {
                 importUsersFromFile(users);
             } catch (Exception e) {
@@ -56,7 +57,7 @@ public class ImporterService {
 
         var events2023 = new File(dataDirectory + "/import/events-2023.xlsx");
         if (events2023.exists()) {
-            log.info("Importing events 2023 from " + events2023.getAbsolutePath());
+            log.info("Importing events 2023 from {}", events2023.getAbsolutePath());
             try {
                 importEventsFromFile(2023, events2023);
             } catch (Exception e) {
@@ -66,7 +67,7 @@ public class ImporterService {
 
         var events2024 = new File(dataDirectory + "/import/events-2024.xlsx");
         if (events2024.exists()) {
-            log.info("Importing events 2024 from " + events2024.getAbsolutePath());
+            log.info("Importing events 2024 from {}", events2024.getAbsolutePath());
             try {
                 importEventsFromFile(2024, events2024);
             } catch (Exception e) {
@@ -99,7 +100,7 @@ public class ImporterService {
     }
 
     private List<ImportError> importEventsFromFile(int year, @NonNull File file) {
-        var users =  userRepository.findAll();
+        var users = userRepository.findAll();
         var errors = new ArrayList<ImportError>();
         var events = EventExcelImporter.readFromFile(file, year, users, errors);
         eventRepository.deleteAllByYear(year);
@@ -131,7 +132,7 @@ public class ImporterService {
     }
 
     private void importUsersFromFile(File file) {
-        var users = UserExcelImporter.readFromFile(file);
+        var users = UserExcelImporter.readFromFile(file, password);
         userRepository.deleteAll();
         for (UserDetails user : users) {
             userRepository.create(user);

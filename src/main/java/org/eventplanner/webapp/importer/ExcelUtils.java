@@ -1,8 +1,11 @@
 package org.eventplanner.webapp.importer;
 
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,17 +17,27 @@ import java.util.Optional;
 
 public class ExcelUtils {
 
-    public static String[][] readExcelFile(File file) throws IOException {
+    public static String[][] readExcelFile(@NonNull File file) throws IOException {
+        return readExcelFile(file, null);
+    }
+
+    public static String[][] readExcelFile(@NonNull File file, @Nullable String password) throws IOException {
         if (!file.exists()) {
             return new String[][]{};
         }
-        try(InputStream in = new FileInputStream(file)) {
-            return readExcelFile(in);
+        try (InputStream in = new FileInputStream(file)) {
+            return readExcelFile(in, password);
         }
     }
 
-    public static String[][] readExcelFile(InputStream in) throws IOException {
-        var workbook = new XSSFWorkbook(in);
+    public static String[][] readExcelFile(@NonNull InputStream in, @Nullable String password) throws IOException {
+        XSSFWorkbook workbook;
+        if (password != null && !password.isBlank()) {
+            workbook = (XSSFWorkbook) WorkbookFactory.create(in, password);
+        } else {
+            workbook = new XSSFWorkbook(in);
+        }
+
         var sheet = workbook.getSheetAt(0);
 
         int colCount = 5;
