@@ -4,6 +4,7 @@ import org.eventplanner.webapp.users.UserRepository;
 import org.eventplanner.webapp.users.models.AuthKey;
 import org.eventplanner.webapp.users.models.UserDetails;
 import org.eventplanner.webapp.users.models.UserKey;
+import org.eventplanner.webapp.utils.Crypto;
 import org.eventplanner.webapp.utils.FileSystemJsonRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
@@ -20,16 +21,21 @@ import java.util.Optional;
 public class UserFileSystemRepository implements UserRepository {
 
     private final FileSystemJsonRepository<UserDetailsJsonEntity> fs;
+    private final Crypto crypto;
 
-    public UserFileSystemRepository(@Value("${custom.data-directory}") String dataDirectory) {
+    public UserFileSystemRepository(
+        @Value("${custom.data-directory}") String dataDirectory,
+        @Value("${custom.data-encryption-password}") String password
+    ) {
         var directory = new File(dataDirectory + "/users");
         this.fs = new FileSystemJsonRepository<>(UserDetailsJsonEntity.class, directory);
+        this.crypto = new Crypto("99066439-9e45-48e7-bb3d-7abff0e9cb9c", password);
     }
 
     @Override
     public @NonNull List<UserDetails> findAll() {
         return fs.findAll().stream()
-            .map(UserDetailsJsonEntity::toDomain)
+            .map((json) -> json.toDomain(crypto))
             .sorted(Comparator.comparing(UserDetails::fullName))
             .toList();
     }
@@ -37,7 +43,7 @@ public class UserFileSystemRepository implements UserRepository {
     @Override
     public @NonNull Optional<UserDetails> findByKey(@NonNull UserKey key) {
         return fs.findByKey(key.value())
-            .map(UserDetailsJsonEntity::toDomain);
+            .map((json) -> json.toDomain(crypto));
     }
 
     @Override
@@ -71,14 +77,14 @@ public class UserFileSystemRepository implements UserRepository {
 
     @Override
     public @NonNull UserDetails create(@NonNull UserDetails user) {
-        return fs.save(user.key().value(), UserDetailsJsonEntity.fromDomain(user))
-            .toDomain();
+        fs.save(user.key().value(), UserDetailsJsonEntity.fromDomain(user, crypto));
+        return user;
     }
 
     @Override
     public @NonNull UserDetails update(@NonNull UserDetails user) {
-        return fs.save(user.key().value(), UserDetailsJsonEntity.fromDomain(user))
-            .toDomain();
+        fs.save(user.key().value(), UserDetailsJsonEntity.fromDomain(user, crypto));
+        return user;
     }
 
     @Override
