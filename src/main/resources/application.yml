@@ -1,3 +1,7 @@
+build:
+  time: ${BUILD_DATE:now}
+  commit: ${BUILD_COMMIT:local}
+  branch: ${BUILD_BRANCH:main}
 custom:
   data-directory: data
   data-encryption-password: ${DATA_ENCRYPTION_PASSWORD:default-encryption-password}
