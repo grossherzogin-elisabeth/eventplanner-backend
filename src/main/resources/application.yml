@@ -21,7 +21,9 @@ auth:
     client-id: ${AUTH_ENTRA_ID_CLIENT_ID:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
     tennant-id: ${AUTH_ENTRA_ID_TENNANT_ID:63384ddf-6496-44bd-b22c-93e944e6ed88}
 security:
-  enable-csrf: true
+  # TODO csrf protection currently blocks all post requests even if the xsrf token is present
+  # temporary disabled until further investigation
+  enable-csrf: false
 spring:
   security:
     oauth2:
