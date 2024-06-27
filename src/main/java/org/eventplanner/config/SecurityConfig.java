@@ -1,7 +1,6 @@
 package org.eventplanner.config;
 
-import org.eventplanner.domain.users.models.Role;
-import org.eventplanner.domain.users.models.Role;
+import org.eventplanner.users.values.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

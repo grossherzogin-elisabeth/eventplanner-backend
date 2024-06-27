@@ -1,7 +1,6 @@
 package org.eventplanner.utils;
 
-import org.eventplanner.driven.filesystem.users.Crypto;
-import org.eventplanner.driven.filesystem.users.Crypto;
+import org.eventplanner.users.adapter.filesystem.Crypto;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
